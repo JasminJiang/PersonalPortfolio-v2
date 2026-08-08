@@ -1,19 +1,15 @@
 ---
-import "../styles/global.css";
+import CylindricalLoader from "../components/CylindricalLoader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Jasmin Xinjie Jiang</title>
-  </head>
-  <body>
-    <main>
-      <p>Astro migration baseline</p>
-      <h1>Jasmin Xinjie Jiang</h1>
-    </main>
-  </body>
-</html>
+<BaseLayout bodyClass="home-page">
+  <CylindricalLoader />
+  <section class="home-intro" aria-labelledby="portfolio-title">
+    <p class="eyebrow">Selected work · 2020–2026</p>
+    <h1 id="portfolio-title">Space, systems<br />and experience.</h1>
+    <p class="home-intro__note">
+      The project index and interactive three-dimensional carousel will enter here in the next migration stages.
+    </p>
+  </section>
+</BaseLayout>

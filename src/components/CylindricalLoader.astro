@@ -1,0 +1,35 @@
+---
+const glyphs = Array.from("JASMIN—XINJIE—");
+---
+
+<div class="portfolio-loader" data-portfolio-loader role="status" aria-live="polite">
+  <p class="sr-only">Loading Jasmin Xinjie Jiang’s portfolio</p>
+  <div class="portfolio-loader__scene" aria-hidden="true">
+    <div class="portfolio-loader__cylinder" style={`--glyph-count: ${glyphs.length}`}>
+      {
+        glyphs.map((glyph, index) => (
+          <span style={`--glyph-index: ${index}`}>{glyph}</span>
+        ))
+      }
+    </div>
+  </div>
+  <span class="portfolio-loader__caption" aria-hidden="true">Portfolio / 2026</span>
+</div>
+
+<script>
+  const loader = document.querySelector<HTMLElement>("[data-portfolio-loader]");
+
+  const dismissLoader = () => {
+    if (!loader || loader.dataset.state === "complete") return;
+    loader.dataset.state = "complete";
+    loader.addEventListener("transitionend", () => loader.setAttribute("hidden", ""), {
+      once: true,
+    });
+  };
+
+  if (document.readyState === "complete") {
+    dismissLoader();
+  } else {
+    window.addEventListener("load", dismissLoader, { once: true });
+  }
+</script>

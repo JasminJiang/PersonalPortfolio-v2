@@ -1,0 +1,41 @@
+---
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  title = "Jasmin Xinjie Jiang",
+  description = "Portfolio of Jasmin Xinjie Jiang, a multidisciplinary designer working across architecture, immersive media, UI/UX, and photography.",
+  showHeader = true,
+  showFooter = true,
+  bodyClass = "",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    {showHeader && <SiteHeader currentPath={Astro.url.pathname} />}
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+    {showFooter && <SiteFooter />}
+  </body>
+</html>
