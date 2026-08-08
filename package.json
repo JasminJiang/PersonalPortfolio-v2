@@ -14,6 +14,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "content:import": "node scripts/import-legacy-content.mjs",
+    "content:validate": "node scripts/validate-content.mjs",
+    "media:prepare": "node scripts/prepare-media.mjs",
+    "media:upload-plan": "node scripts/create-r2-upload-plan.mjs",
     "verify": "npm run check && npm run build"
   },
   "dependencies": {

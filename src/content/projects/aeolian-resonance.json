@@ -1,0 +1,27 @@
+{
+  "slug": "aeolian-resonance",
+  "legacyId": "01",
+  "order": 1,
+  "title": "Aeolian Resonance",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2023,
+  "location": "Shanghai, China",
+  "description": [
+    "Aeolian Resonance is an interactive installation in the Anji bamboo forest that translates the invisible \"breath of nature\" into a tangible spatial experience. By mimicking the organic growth and rhythmic swaying of bamboo, the pavilion creates a responsive sanctuary where the movement of wind is visualized through a synchronized symphony of light. The structure’s form was meticulously generated via Grasshopper parametric modeling, utilizing a space-frame grid to optimize the suspension of thousands of bamboo poles while ensuring structural stability through recursive force analysis.",
+    "The project’s \"nervous system\" is an integrated Arduino-based sensory network that bridges the gap between digital logic and physical environment. Real-time data from 485 wind speed sensors is processed by an Arduino UNO to modulate the brightness of LED modules hidden within the poles. As wind sweeps through the site, the installation maps its trajectory into a dynamic wave of light, allowing visitors to visually track the \"path of the wind\" as it pulses through the architecture."
+  ],
+  "coverMediaId": "aeolian-resonance--cover",
+  "mediaIds": [
+    "aeolian-resonance--cover",
+    "aeolian-resonance--01",
+    "aeolian-resonance--02",
+    "aeolian-resonance--03",
+    "aeolian-resonance--04",
+    "aeolian-resonance--05",
+    "aeolian-resonance--06",
+    "aeolian-resonance--07",
+    "aeolian-resonance--08",
+    "aeolian-resonance--09"
+  ]
+}

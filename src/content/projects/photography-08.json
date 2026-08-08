@@ -1,0 +1,23 @@
+{
+  "slug": "photography-08",
+  "legacyId": "P08",
+  "order": 18,
+  "title": "Untitled Photo 8",
+  "category": "photography",
+  "categoryLabel": "Photography",
+  "year": 2024,
+  "description": [],
+  "coverMediaId": "photography-08--cover",
+  "mediaIds": [
+    "photography-08--cover",
+    "photography-08--01",
+    "photography-08--02",
+    "photography-08--03",
+    "photography-08--04",
+    "photography-08--05",
+    "photography-08--06",
+    "photography-08--07",
+    "photography-08--08",
+    "photography-08--09"
+  ]
+}

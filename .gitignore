@@ -3,6 +3,7 @@ dist/
 .astro/
 .npm-cache/
 .r2-staging/
+.media-work/
 coverage/
 playwright-report/
 test-results/

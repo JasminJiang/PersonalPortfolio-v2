@@ -1,0 +1,28 @@
+{
+  "slug": "cyan-pavilion",
+  "legacyId": "04",
+  "order": 4,
+  "title": "Cyan Pavilion",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2022,
+  "location": "Shanghai, China",
+  "description": [
+    "This project breathes new life into a traditional timber-framed structure by transforming it into a contemporary tea house and cultural retail space. The design employs a \"building-within-a-building\" strategy, inserting a lightweight cyan steel framework into the historic shell to create a functional mezzanine. This bold color contrast clearly distinguishes the modern intervention from the weathered textures of the original architecture.",
+    "The ground floor functions as an open-plan \"Fine Goods\" market and tea preparation area, while the upper level provides a cozy social space for customers. By blending industrial materials like corrugated metal and neon signage with traditional bamboo weaving, the project redefines heritage through a modern lens. Now fully operational, the pavilion serves as a successful model for urban micro-renovation and commercial vitality."
+  ],
+  "coverMediaId": "cyan-pavilion--cover",
+  "mediaIds": [
+    "cyan-pavilion--cover",
+    "cyan-pavilion--01",
+    "cyan-pavilion--02",
+    "cyan-pavilion--03",
+    "cyan-pavilion--04",
+    "cyan-pavilion--05",
+    "cyan-pavilion--06",
+    "cyan-pavilion--07",
+    "cyan-pavilion--08",
+    "cyan-pavilion--09",
+    "cyan-pavilion--10"
+  ]
+}

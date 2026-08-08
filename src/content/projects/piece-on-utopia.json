@@ -1,0 +1,20 @@
+{
+  "slug": "piece-on-utopia",
+  "legacyId": "06",
+  "order": 6,
+  "title": "Piece on Utopia",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2022,
+  "location": "Shanghai, China",
+  "description": [
+    "This project challenges the rigid physical boundaries of traditional urbanism by proposing a reconfigurable city prototype. Born from the need for social safety and resource balance in a post-pandemic world, the design deconstructs urban functions—housing, healthcare, and commerce—into autonomous, mobile modules. By utilizing vertical transport towers and a circular rail system, these \"pieces\" can be assembled or relocated in real-time. This shifts the urban paradigm from \"people seeking services\" to \"services finding people,\" creating a resilient utopia capable of adapting to public health crises while maintaining vibrant social connectivity."
+  ],
+  "coverMediaId": "piece-on-utopia--cover",
+  "mediaIds": [
+    "piece-on-utopia--cover",
+    "piece-on-utopia--01",
+    "piece-on-utopia--02",
+    "piece-on-utopia--03"
+  ]
+}

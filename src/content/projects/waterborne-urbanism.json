@@ -1,0 +1,25 @@
+{
+  "slug": "waterborne-urbanism",
+  "legacyId": "02",
+  "order": 2,
+  "title": "Waterborne Urbanism",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2024,
+  "location": "Shanghai, China",
+  "description": [
+    "This project reinterprets the traditional \"Painted Boat\" (Hua Fang) of Suzhou as a modular, floating architectural prototype to revitalize historic water networks. Drawing inspiration from the flexible spatial logic of Jiangnan water towns, the design employs a hexagonal modular system that can be combined into diverse functional typologies, such as floating galleries, tea houses, and libraries. By utilizing a \"Plug-in\" structural logic, these units adapt to the fluctuating urban fabric, transforming static canals into dynamic public spaces.",
+    "The system integrates advanced physical computing with an autonomous navigation framework. Each module is equipped with a hydraulic stabilization system and a smart piloting interface, allowing the structures to navigate autonomously or dock collectively to form temporary floating plazas. This synthesis of traditional aesthetics and future technology offers a sustainable solution for urban water transport and cultural preservation, enhancing the experiential connection between the city and its aquatic heritage."
+  ],
+  "coverMediaId": "waterborne-urbanism--cover",
+  "mediaIds": [
+    "waterborne-urbanism--cover",
+    "waterborne-urbanism--01",
+    "waterborne-urbanism--02",
+    "waterborne-urbanism--03",
+    "waterborne-urbanism--04",
+    "waterborne-urbanism--05",
+    "waterborne-urbanism--06",
+    "waterborne-urbanism--07"
+  ]
+}

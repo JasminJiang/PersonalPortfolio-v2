@@ -1,0 +1,27 @@
+{
+  "slug": "photography-07",
+  "legacyId": "P07",
+  "order": 17,
+  "title": "Untitled Photo 7",
+  "category": "photography",
+  "categoryLabel": "Photography",
+  "year": 2024,
+  "description": [],
+  "coverMediaId": "photography-07--cover",
+  "mediaIds": [
+    "photography-07--cover",
+    "photography-07--01",
+    "photography-07--02",
+    "photography-07--03",
+    "photography-07--04",
+    "photography-07--05",
+    "photography-07--06",
+    "photography-07--07",
+    "photography-07--08",
+    "photography-07--09",
+    "photography-07--10",
+    "photography-07--11",
+    "photography-07--12",
+    "photography-07--13"
+  ]
+}

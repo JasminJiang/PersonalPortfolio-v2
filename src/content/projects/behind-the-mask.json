@@ -1,0 +1,18 @@
+{
+  "slug": "behind-the-mask",
+  "legacyId": "16",
+  "order": 8,
+  "title": "Behind the Mask",
+  "category": "immersive-media",
+  "categoryLabel": "Immersive Media",
+  "year": 2025,
+  "location": "Munich, Germany",
+  "description": [
+    "This project is an immersive XR virtual exhibition that explores the hidden realities of global waste trade and greenwashing. It translates complex global systems—consumption, disposal, and the export of waste to regions such as Africa—into a spatial and emotional experience. Developed within the framework of Interactive Visualization, the project uses digital architecture, light, sound, and interaction to make abstract environmental and social issues tangible. By moving beyond traditional representation, it allows users to experience how “clean” consumer culture often conceals its real impact elsewhere.",
+    "The experience unfolds through a sequence of spaces: a monumental Masks Hall, a seductive product room, a deceptive gift trap, and a final transformation into a “tin man.” Visitors are guided intuitively without interfaces, and their interactions—approaching, touching, opening—trigger irreversible changes in the environment. As the clean and attractive world collapses into pollution and accumulation, the project shifts the visitor’s role from observer to participant. Rather than giving direct explanations, it creates an embodied understanding of responsibility, encouraging reflection on consumption, perception, and the global consequences of everyday choices."
+  ],
+  "coverMediaId": "behind-the-mask--cover",
+  "mediaIds": [
+    "behind-the-mask--cover"
+  ]
+}

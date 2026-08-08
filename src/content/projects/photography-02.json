@@ -1,0 +1,32 @@
+{
+  "slug": "photography-02",
+  "legacyId": "P02",
+  "order": 12,
+  "title": "Untitled Photo 2",
+  "category": "photography",
+  "categoryLabel": "Photography",
+  "year": 2024,
+  "description": [],
+  "coverMediaId": "photography-02--cover",
+  "mediaIds": [
+    "photography-02--cover",
+    "photography-02--01",
+    "photography-02--02",
+    "photography-02--03",
+    "photography-02--04",
+    "photography-02--05",
+    "photography-02--06",
+    "photography-02--07",
+    "photography-02--08",
+    "photography-02--09",
+    "photography-02--10",
+    "photography-02--11",
+    "photography-02--12",
+    "photography-02--13",
+    "photography-02--14",
+    "photography-02--15",
+    "photography-02--16",
+    "photography-02--17",
+    "photography-02--18"
+  ]
+}
