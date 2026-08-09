@@ -25,6 +25,16 @@ runner records the resulting SEO score but defers the SEO threshold when that
 header is present. Production URLs do not receive this exception and must pass
 the configured SEO threshold.
 
+The full Playwright and Axe suite can also target an immutable Preview instead
+of starting the local Astro server:
+
+```bash
+PLAYWRIGHT_BASE_URL=https://<deployment-id>.<project>.pages.dev npm run test:e2e
+```
+
+In PowerShell, set the same task-specific environment variable with
+`$env:PLAYWRIGHT_BASE_URL="https://..."` before running `npm run test:e2e`.
+
 ## Production domains
 
 Attach `jasminjiang.com` as the production custom domain. Attach

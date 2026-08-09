@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const remoteBaseURL = process.env.PLAYWRIGHT_BASE_URL?.replace(/\/+$/, "");
+const localBaseURL = "http://127.0.0.1:4321";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -8,7 +11,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: "http://127.0.0.1:4321",
+    baseURL: remoteBaseURL ?? localBaseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -17,9 +20,9 @@ export default defineConfig({
     },
   },
   expect: { timeout: 10_000 },
-  webServer: {
+  webServer: remoteBaseURL ? undefined : {
     command: "npm run preview -- --host 127.0.0.1",
-    url: "http://127.0.0.1:4321",
+    url: localBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
