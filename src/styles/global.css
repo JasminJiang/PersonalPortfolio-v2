@@ -1144,9 +1144,11 @@ html[data-carousel-state="ready"] .project-index {
 
 /* Project routes preserve the original cover-first overlay composition. */
 .project-page {
+  --project-interface-font-size: clamp(0.8125rem, calc(0.75rem + 0.22vw), 0.975rem);
+  --project-body-font-size: clamp(1rem, calc(0.94rem + 0.24vw), 1.25rem);
   background: #fff;
   color: #000;
-  font-size: 11px;
+  font-size: 1rem;
 }
 
 .project-page .project-detail {
@@ -1195,9 +1197,10 @@ html[data-carousel-state="ready"] .project-index {
   gap: 2rem;
   padding: 0 2.5rem;
   background: #fff;
-  font-size: clamp(9px, 0.75vw, 13px);
+  font-size: var(--project-interface-font-size);
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 
@@ -1264,9 +1267,10 @@ html[data-carousel-state="ready"] .project-index {
   padding: 0 0 1rem;
   margin: 0 0 0.5rem;
   border-bottom: 1px solid #000;
-  font-size: clamp(9px, 0.85vw, 14px);
+  font-size: var(--project-interface-font-size);
   font-weight: 600;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
   text-transform: uppercase;
 }
 
@@ -1280,7 +1284,9 @@ html[data-carousel-state="ready"] .project-index {
 .project-page .project-detail__information dd {
   padding: 1rem 0;
   border-bottom: 1px solid rgb(0 0 0 / 10%);
-  font-size: clamp(10px, 0.85vw, 14px);
+  font-size: var(--project-interface-font-size);
+  letter-spacing: 0.035em;
+  line-height: 1.5;
 }
 
 .project-page .project-detail__information dt {
@@ -1295,12 +1301,13 @@ html[data-carousel-state="ready"] .project-index {
 .project-page .project-detail__copy {
   display: grid;
   gap: 1rem;
+  max-width: 46rem;
 }
 
 .project-page .project-detail__copy p {
   margin: 0;
   color: rgb(0 0 0 / 80%);
-  font-size: clamp(12px, 1vw, 18px);
+  font-size: var(--project-body-font-size);
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1.65;
@@ -1317,6 +1324,27 @@ html[data-carousel-state="ready"] .project-index {
 
 .project-page .project-detail__pager {
   margin-top: 8rem;
+}
+
+.project-page .project-detail__pager span {
+  font-size: var(--project-interface-font-size);
+  line-height: 1.4;
+}
+
+.project-page .project-detail__pager strong {
+  font-size: clamp(1.5rem, calc(1.2rem + 1.35vw), 2.75rem);
+  line-height: 1.2;
+}
+
+@media (max-width: 56rem) {
+  .project-page .project-detail__information {
+    grid-template-columns: 1fr;
+    gap: clamp(3.5rem, 8vw, 4.5rem);
+  }
+
+  .project-detail__information > section {
+    max-width: 40rem;
+  }
 }
 
 @media (max-width: 42rem) {

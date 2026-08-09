@@ -248,6 +248,53 @@ test("home interface type remains readable in a split-screen viewport", async ({
   await expectNoHorizontalOverflow(page);
 });
 
+test("project detail typography remains readable from full to split-screen widths", async ({ page }) => {
+  await page.goto("/projects/voltlab-architecture/");
+
+  for (const viewport of [
+    { width: 1440, height: 900, columns: 2 },
+    { width: 800, height: 900, columns: 1 },
+    { width: 390, height: 844, columns: 1 },
+  ]) {
+    await page.setViewportSize(viewport);
+
+    const typography = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!(element instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
+        const style = getComputedStyle(element);
+        return {
+          fontSize: Number.parseFloat(style.fontSize),
+          lineHeight: Number.parseFloat(style.lineHeight),
+        };
+      };
+      const information = document.querySelector(".project-detail__information");
+      if (!(information instanceof HTMLElement)) throw new Error("Missing project information");
+
+      return {
+        body: read(".project-detail__copy p"),
+        heading: read(".project-detail__information h2"),
+        detail: read(".project-detail__information dd"),
+        metadata: read(".project-detail__metadata"),
+        pagerLabel: read(".project-detail__pager span"),
+        pagerTitle: read(".project-detail__pager strong"),
+        columns: getComputedStyle(information).gridTemplateColumns.split(" ").length,
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+
+    expect(typography.body.fontSize).toBeGreaterThanOrEqual(16);
+    expect(typography.body.lineHeight).toBeGreaterThanOrEqual(25);
+    expect(typography.heading.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.detail.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.metadata.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.pagerLabel.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.pagerTitle.fontSize).toBeGreaterThanOrEqual(24);
+    expect(typography.columns).toBe(viewport.columns);
+    expect(typography.overflow).toBeLessThanOrEqual(1);
+  }
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
