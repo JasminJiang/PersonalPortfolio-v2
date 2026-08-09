@@ -210,7 +210,10 @@ test("canvas click fallback opens any visible project", async ({ page, isMobile 
   const box = await carousel.boundingBox();
   expect(box).not.toBeNull();
   if (!box) return;
-  await page.mouse.click(box.x + box.width * 0.7, box.y + box.height * 0.55);
+  await carousel.locator(".carousel-shell__canvas").dispatchEvent("click", {
+    clientX: box.x + box.width * 0.7,
+    clientY: box.y + box.height * 0.55,
+  });
   await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
 });
 
