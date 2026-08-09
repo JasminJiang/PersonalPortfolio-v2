@@ -64,6 +64,36 @@ test("high-frequency wheel bursts cannot queue more than one project of motion",
   await expect(heading).toHaveText(/Aeolian Resonance|Waterborne Urbanism/);
 });
 
+test("WebGL project changes do not request new carousel textures", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  const carouselTextureRequests: string[] = [];
+  let sceneReady = false;
+  page.on("request", (request) => {
+    if (
+      sceneReady
+      && request.resourceType() === "image"
+      && (request.url().includes("width=1280") || request.url().includes("width=768"))
+    ) {
+      carouselTextureRequests.push(request.url());
+    }
+  });
+
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-scene-state", "ready");
+  await page.waitForFunction(() => performance.getEntriesByType("resource")
+    .filter((entry) => entry.name.includes("width=768")).length >= 21);
+  await page.waitForLoadState("networkidle");
+  sceneReady = true;
+  await carousel.hover();
+  for (let index = 0; index < 8; index += 1) {
+    await page.mouse.wheel(0, 40);
+  }
+  await page.waitForTimeout(600);
+
+  expect(carouselTextureRequests).toEqual([]);
+});
+
 test("pointer drag changes the active project", async ({ page, isMobile }) => {
   test.skip(isMobile, "Touch behavior is covered by the mobile swipe test");
   await page.goto("/");

@@ -28,6 +28,7 @@ export interface CarouselProject {
   year: number;
   coverSrc: string;
   previewSrc: string;
+  compactSrc: string;
 }
 
 interface Props {
@@ -93,6 +94,7 @@ export default function ProjectCarousel({ projects }: Props) {
   const [filter, setFilter] = useState<ProjectFilter>("all");
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [compactTextures, setCompactTextures] = useState(false);
   const shell = useRef<HTMLElement>(null);
   const activeIndexRef = useRef(0);
   const sceneRequested = useRef(false);
@@ -131,6 +133,8 @@ export default function ProjectCarousel({ projects }: Props) {
       setRenderState("ready");
 
       const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+      const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+      setCompactTextures(deviceMemory <= 4 || window.innerWidth < 768);
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!connection?.saveData && !reduceMotion) {
         automaticSceneTimer = window.setTimeout(requestScene, AUTOMATIC_SCENE_DELAY_MS);
@@ -385,15 +389,17 @@ export default function ProjectCarousel({ projects }: Props) {
               beginOpen(index);
             }}
           >
-            <img
-              src={previewIndex === 2 || Math.abs(previewIndex - 2) === 1 ? project.coverSrc : project.previewSrc}
-              alt=""
-              loading="eager"
-              fetchPriority={previewIndex === 2 ? "high" : "low"}
-              crossOrigin="anonymous"
-              decoding="async"
-              draggable={false}
-            />
+            {!sceneReady && (
+              <img
+                src={project.previewSrc}
+                alt=""
+                loading="eager"
+                fetchPriority={previewIndex === 2 ? "high" : "low"}
+                crossOrigin="anonymous"
+                decoding="async"
+                draggable={false}
+              />
+            )}
           </a>
         ))}
       </nav>
@@ -408,6 +414,7 @@ export default function ProjectCarousel({ projects }: Props) {
                 activeIndex={activeIndex}
                 openingIndex={openingIndex}
                 reducedMotion={reducedMotion}
+                compactTextures={compactTextures}
                 onSelect={selectPanel}
                 onActive={activateProject}
                 onReady={markSceneReady}

@@ -19,6 +19,7 @@ interface Props {
   activeIndex: number;
   openingIndex: number | null;
   reducedMotion: boolean;
+  compactTextures: boolean;
   onSelect: (index: number) => void;
   onActive: (index: number) => void;
   onReady: () => void;
@@ -214,7 +215,7 @@ function CarouselPanel({
   );
 }
 
-function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect, onActive, onTextureReady, onHoverChange }: Omit<Props, "onReady" | "onContextLost"> & { onHoverChange: (hovered: boolean) => void }) {
+function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, compactTextures, onSelect, onActive, onTextureReady, onHoverChange }: Omit<Props, "onReady" | "onContextLost"> & { onHoverChange: (hovered: boolean) => void }) {
   const ring = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
   const itemAngle = -((activeIndex / slotCount) * FULL_TURN);
@@ -309,8 +310,6 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
   return (
     <group ref={ring} position={[0, -1.15, 0]} rotation={[0, targetRotation, 0]}>
       {projects.map((project, index) => {
-        const directDistance = Math.abs(index - activeIndex);
-        const wrappedDistance = Math.min(directDistance, projects.length - directDistance);
         return (
           <CarouselPanel
             key={project.slug}
@@ -319,7 +318,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
             active={index === activeIndex}
             opening={index === openingIndex}
             dimmed={openingIndex !== null && index !== openingIndex}
-            coverSrc={wrappedDistance <= 3 ? project.previewSrc : undefined}
+            coverSrc={compactTextures ? project.compactSrc : project.previewSrc}
             reducedMotion={reducedMotion}
             onSelect={onSelect}
             onActiveTextureReady={onTextureReady}
@@ -337,6 +336,7 @@ export default function ProjectCarouselScene({
   activeIndex,
   openingIndex,
   reducedMotion,
+  compactTextures,
   onSelect,
   onActive,
   onReady,
@@ -365,6 +365,7 @@ export default function ProjectCarouselScene({
         activeIndex={activeIndex}
         openingIndex={openingIndex}
         reducedMotion={reducedMotion}
+        compactTextures={compactTextures}
         onSelect={onSelect}
         onActive={onActive}
         onTextureReady={onTextureReady}
