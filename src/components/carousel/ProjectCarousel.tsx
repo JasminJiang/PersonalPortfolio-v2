@@ -14,6 +14,11 @@ import {
   useState,
 } from "react";
 import { navigate } from "astro:transitions/client";
+import {
+  CAROUSEL_WHEEL_MOTION_EVENT,
+  CAROUSEL_WHEEL_ROTATION_FACTOR,
+  type CarouselWheelMotionDetail,
+} from "./carouselMotion";
 
 export interface CarouselProject {
   slug: string;
@@ -31,6 +36,7 @@ interface Props {
 }
 
 const DRAG_STEP_PX = 56;
+const WHEEL_INPUT_RESET_MS = 160;
 const AUTOMATIC_SCENE_DELAY_MS = 0;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
 const FILTERS = [
@@ -221,29 +227,44 @@ export default function ProjectCarousel({ projects }: Props) {
     const element = shell.current;
     if (!element || renderState === "checking" || renderState === "fallback") return;
 
-    let accumulatedDelta = 0;
-    let locked = false;
-    let unlockTimer: number | undefined;
+    let gestureDelta = 0;
+    let gestureStep = 0;
+    let resetTimer: number | undefined;
+    const wheelDeltaPerProject = (Math.PI * 2 / Math.max(projects.length, 1)) / CAROUSEL_WHEEL_ROTATION_FACTOR;
     const handleWheel = (event: WheelEvent) => {
+      if (openingIndex !== null) return;
       const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
       if (delta === 0) return;
       event.preventDefault();
-      accumulatedDelta += delta;
-      if (locked || Math.abs(accumulatedDelta) < 28) return;
-      moveBy(accumulatedDelta > 0 ? 1 : -1);
-      accumulatedDelta = 0;
-      locked = true;
-      unlockTimer = window.setTimeout(() => {
-        locked = false;
-      }, reducedMotion ? 80 : 180);
+      requestScene();
+      const normalizedDelta = Math.max(-80, Math.min(80, delta));
+
+      if (!reducedMotion && !document.hidden) {
+        window.dispatchEvent(new CustomEvent<CarouselWheelMotionDetail>(CAROUSEL_WHEEL_MOTION_EVENT, {
+          detail: { delta: normalizedDelta },
+        }));
+      }
+
+      gestureDelta += normalizedDelta;
+      const nextGestureStep = Math.round(gestureDelta / wheelDeltaPerProject);
+      if (nextGestureStep !== gestureStep) {
+        moveBy(nextGestureStep - gestureStep);
+        gestureStep = nextGestureStep;
+      }
+
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(() => {
+        gestureDelta = 0;
+        gestureStep = 0;
+      }, reducedMotion ? 80 : WHEEL_INPUT_RESET_MS);
     };
 
     element.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       element.removeEventListener("wheel", handleWheel);
-      if (unlockTimer !== undefined) window.clearTimeout(unlockTimer);
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
     };
-  }, [moveBy, reducedMotion, renderState]);
+  }, [moveBy, openingIndex, projects.length, reducedMotion, renderState, requestScene]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (!event.isPrimary || event.button !== 0) return;

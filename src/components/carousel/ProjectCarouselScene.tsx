@@ -3,9 +3,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group, Mesh, MeshBasicMaterial, Texture } from "three";
 import { AdditiveBlending, DoubleSide, LinearFilter, MathUtils, SRGBColorSpace, TextureLoader } from "three";
 import type { CarouselProject } from "./ProjectCarousel";
+import {
+  CAROUSEL_WHEEL_MOTION_EVENT,
+  CAROUSEL_WHEEL_ROTATION_FACTOR,
+  type CarouselWheelMotionDetail,
+} from "./carouselMotion";
 
 const FULL_TURN = Math.PI * 2;
 const CAROUSEL_RADIUS = 30;
+const WHEEL_SETTLE_DELAY_MS = 150;
 
 interface Props {
   projects: CarouselProject[];
@@ -212,22 +218,46 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
   const invalidate = useThree((state) => state.invalidate);
   const itemAngle = -((activeIndex / slotCount) * FULL_TURN);
   const targetRotation = Math.PI - itemAngle;
+  const alignedTarget = useRef(targetRotation);
+  const motionTarget = useRef(targetRotation);
+  const wheelMotionUntil = useRef(0);
 
   useEffect(() => {
+    const current = ring.current?.rotation.y ?? targetRotation;
+    const turns = Math.round((current - targetRotation) / FULL_TURN);
+    const nearestTarget = targetRotation + turns * FULL_TURN;
+    alignedTarget.current = nearestTarget;
+    if (performance.now() >= wheelMotionUntil.current) motionTarget.current = nearestTarget;
     invalidate();
   }, [invalidate, reducedMotion, targetRotation]);
+
+  useEffect(() => {
+    const handleWheelMotion = (event: Event) => {
+      if (reducedMotion || openingIndex !== null || document.hidden) return;
+      const detail = (event as CustomEvent<CarouselWheelMotionDetail>).detail;
+      if (!detail || !Number.isFinite(detail.delta)) return;
+      const delta = MathUtils.clamp(detail.delta, -80, 80);
+      motionTarget.current += delta * CAROUSEL_WHEEL_ROTATION_FACTOR;
+      wheelMotionUntil.current = performance.now() + WHEEL_SETTLE_DELAY_MS;
+      invalidate();
+    };
+
+    window.addEventListener(CAROUSEL_WHEEL_MOTION_EVENT, handleWheelMotion);
+    return () => window.removeEventListener(CAROUSEL_WHEEL_MOTION_EVENT, handleWheelMotion);
+  }, [invalidate, openingIndex, reducedMotion]);
 
   useFrame((_, delta) => {
     if (!ring.current) return;
     const current = ring.current.rotation.y;
-    const turns = Math.round((current - targetRotation) / FULL_TURN);
-    const nearestTarget = targetRotation + turns * FULL_TURN;
+    const receivingWheelInput = performance.now() < wheelMotionUntil.current;
+    if (!receivingWheelInput) motionTarget.current = alignedTarget.current;
+    const nextTarget = motionTarget.current;
     if (reducedMotion) {
-      ring.current.rotation.y = nearestTarget;
+      ring.current.rotation.y = alignedTarget.current;
       return;
     }
-    ring.current.rotation.y = MathUtils.damp(current, nearestTarget, 5.5, delta);
-    if (Math.abs(ring.current.rotation.y - nearestTarget) > 0.0005) invalidate();
+    ring.current.rotation.y = MathUtils.damp(current, nextTarget, receivingWheelInput ? 9 : 5.5, delta);
+    if (Math.abs(ring.current.rotation.y - nextTarget) > 0.0005) invalidate();
 
   });
 

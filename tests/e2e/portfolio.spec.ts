@@ -32,6 +32,8 @@ test("carousel supports buttons, keyboard, wheel, and route restoration", async 
   if (!isMobile) {
     await carousel.hover();
     await page.mouse.wheel(0, 80);
+    await expect(heading).toHaveText("Voltlab");
+    await page.mouse.wheel(0, 80);
     await expect(heading).toHaveText("Cyan Pavilion");
   }
 
