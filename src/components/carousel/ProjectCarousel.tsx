@@ -15,8 +15,11 @@ import {
 } from "react";
 import { navigate } from "astro:transitions/client";
 import {
-  CAROUSEL_WHEEL_MOTION_EVENT,
-  type CarouselWheelMotionDetail,
+  accumulateWheelSteps,
+  CAROUSEL_WHEEL_MAX_DELTA_PER_FRAME,
+  type CarouselNavigationCommand,
+  normalizeWheelDelta,
+  publishCarouselWheelMotion,
 } from "./carouselMotion";
 
 export interface CarouselProject {
@@ -36,9 +39,10 @@ interface Props {
 }
 
 const DRAG_STEP_PX = 56;
-const WHEEL_MAX_DELTA_PER_FRAME = 80;
+const STATIC_WHEEL_STEP_PX = 96;
 const REDUCED_MOTION_WHEEL_INTERVAL_MS = 180;
-const AUTOMATIC_SCENE_DELAY_MS = 0;
+const SCENE_AFTER_INPUT_DELAY_MS = 220;
+const AUTOMATIC_SCENE_IDLE_TIMEOUT_MS = 2500;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
 const FILTERS = [
   { id: "all", label: "All projects" },
@@ -95,9 +99,14 @@ export default function ProjectCarousel({ projects }: Props) {
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [compactTextures, setCompactTextures] = useState(false);
+  const [navigationCommand, setNavigationCommand] = useState<CarouselNavigationCommand>({ id: 0, index: 0 });
   const shell = useRef<HTMLElement>(null);
   const activeIndexRef = useRef(0);
+  const navigationCommandId = useRef(0);
   const sceneRequested = useRef(false);
+  const automaticSceneHandle = useRef<{ kind: "idle" | "timer"; id: number } | null>(null);
+  const sceneUpgradeTimer = useRef<number | undefined>(undefined);
+  const staticWheelAccumulator = useRef(0);
   const openingTimer = useRef<number | undefined>(undefined);
   const suppressPanelSelectUntil = useRef(0);
   const drag = useRef<{
@@ -114,18 +123,39 @@ export default function ProjectCarousel({ projects }: Props) {
   const previousProject = filteredProjects[(activeIndex - 1 + filteredProjects.length) % filteredProjects.length];
   const nextProject = filteredProjects[(activeIndex + 1) % filteredProjects.length];
 
-  const requestScene = useCallback(() => {
-    if (sceneRequested.current) return;
-    sceneRequested.current = true;
-    setSceneEnabled(true);
+  const cancelAutomaticScene = useCallback(() => {
+    const handle = automaticSceneHandle.current;
+    if (!handle) return;
+    if (handle.kind === "idle") window.cancelIdleCallback(handle.id);
+    else window.clearTimeout(handle.id);
+    automaticSceneHandle.current = null;
   }, []);
 
+  const enableScene = useCallback(() => {
+    if (sceneRequested.current) return;
+    cancelAutomaticScene();
+    if (sceneUpgradeTimer.current !== undefined) {
+      window.clearTimeout(sceneUpgradeTimer.current);
+      sceneUpgradeTimer.current = undefined;
+    }
+    sceneRequested.current = true;
+    setSceneEnabled(true);
+  }, [cancelAutomaticScene]);
+
+  const scheduleSceneUpgrade = useCallback(() => {
+    if (sceneRequested.current) return;
+    cancelAutomaticScene();
+    if (sceneUpgradeTimer.current !== undefined) window.clearTimeout(sceneUpgradeTimer.current);
+    sceneUpgradeTimer.current = window.setTimeout(enableScene, SCENE_AFTER_INPUT_DELAY_MS);
+  }, [cancelAutomaticScene, enableScene]);
+
   useEffect(() => {
-    let automaticSceneTimer: number | undefined;
     const setupFrame = window.requestAnimationFrame(() => {
-      const initialIndex = projectIndexFromHash(filteredProjects);
+      const initialIndex = projectIndexFromHash(projects);
       activeIndexRef.current = initialIndex;
       setActiveIndex(initialIndex);
+      navigationCommandId.current += 1;
+      setNavigationCommand({ id: navigationCommandId.current, index: initialIndex });
       if (!supportsWebGL()) {
         setRenderState("fallback");
         return;
@@ -137,16 +167,23 @@ export default function ProjectCarousel({ projects }: Props) {
       setCompactTextures(deviceMemory <= 4 || window.innerWidth < 768);
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!connection?.saveData && !reduceMotion) {
-        automaticSceneTimer = window.setTimeout(requestScene, AUTOMATIC_SCENE_DELAY_MS);
+        if (typeof window.requestIdleCallback === "function") {
+          const id = window.requestIdleCallback(enableScene, { timeout: AUTOMATIC_SCENE_IDLE_TIMEOUT_MS });
+          automaticSceneHandle.current = { kind: "idle", id };
+        } else {
+          const id = window.setTimeout(enableScene, 1200);
+          automaticSceneHandle.current = { kind: "timer", id };
+        }
       }
     });
 
     return () => {
       window.cancelAnimationFrame(setupFrame);
-      if (automaticSceneTimer !== undefined) window.clearTimeout(automaticSceneTimer);
+      cancelAutomaticScene();
+      if (sceneUpgradeTimer.current !== undefined) window.clearTimeout(sceneUpgradeTimer.current);
       document.documentElement.removeAttribute("data-carousel-state");
     };
-  }, [filteredProjects, requestScene]);
+  }, [cancelAutomaticScene, enableScene, projects]);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -160,34 +197,41 @@ export default function ProjectCarousel({ projects }: Props) {
     document.documentElement.dataset.carouselState = renderState;
   }, [renderState]);
 
-  const activateProject = useCallback((requestedIndex: number) => {
+  const reportActiveProject = useCallback((requestedIndex: number) => {
     if (filteredProjects.length === 0) return;
     const index = (requestedIndex + filteredProjects.length) % filteredProjects.length;
     const project = filteredProjects[index];
     if (!project) return;
+    if (activeIndexRef.current === index && window.location.hash === `#${project.slug}`) return;
     activeIndexRef.current = index;
     setActiveIndex(index);
     history.replaceState(history.state, "", `/#${project.slug}`);
   }, [filteredProjects]);
 
+  const commandProject = useCallback((requestedIndex: number) => {
+    if (filteredProjects.length === 0) return;
+    const index = (requestedIndex + filteredProjects.length) % filteredProjects.length;
+    reportActiveProject(index);
+    navigationCommandId.current += 1;
+    setNavigationCommand({ id: navigationCommandId.current, index });
+  }, [filteredProjects.length, reportActiveProject]);
+
   const moveBy = useCallback((distance: number) => {
     if (openingIndex !== null) return;
-    requestScene();
-    activateProject(activeIndexRef.current + distance);
-  }, [activateProject, openingIndex, requestScene]);
+    scheduleSceneUpgrade();
+    commandProject(activeIndexRef.current + distance);
+  }, [commandProject, openingIndex, scheduleSceneUpgrade]);
 
   const beginOpen = useCallback((index: number) => {
     if (openingIndex !== null) return;
     const project = filteredProjects[index];
     if (!project) return;
-    activeIndexRef.current = index;
-    setActiveIndex(index);
+    commandProject(index);
     setOpeningIndex(index);
-    history.replaceState(history.state, "", `/#${project.slug}`);
     openingTimer.current = window.setTimeout(() => {
       void navigate(`/projects/${project.slug}/`);
     }, reducedMotion ? 40 : 560);
-  }, [filteredProjects, openingIndex, reducedMotion]);
+  }, [commandProject, filteredProjects, openingIndex, reducedMotion]);
 
   useEffect(() => () => {
     if (openingTimer.current !== undefined) window.clearTimeout(openingTimer.current);
@@ -224,21 +268,57 @@ export default function ProjectCarousel({ projects }: Props) {
     setActiveIndex(0);
     setFilter(nextFilter);
     if (firstProject) history.replaceState(history.state, "", `/#${firstProject.slug}`);
-    requestScene();
-  }, [filter, projects, requestScene]);
+    navigationCommandId.current += 1;
+    setNavigationCommand({ id: navigationCommandId.current, index: 0 });
+    scheduleSceneUpgrade();
+  }, [filter, projects, scheduleSceneUpgrade]);
 
   useEffect(() => {
     const element = shell.current;
     if (!element || renderState === "checking" || renderState === "fallback") return;
 
+    const computedStyle = window.getComputedStyle(element);
+    const parsedLineHeight = Number.parseFloat(computedStyle.lineHeight);
+    const parsedFontSize = Number.parseFloat(computedStyle.fontSize);
+    const lineHeight = Number.isFinite(parsedLineHeight)
+      ? parsedLineHeight
+      : (Number.isFinite(parsedFontSize) ? parsedFontSize * 1.2 : 16);
     let lastReducedMotionStep = 0;
+    let pendingWheelDelta = 0;
+    let pendingWheelDirection = 0;
+    let wheelFrame: number | undefined;
+
+    const flushWheelMotion = () => {
+      wheelFrame = undefined;
+      const delta = Math.max(
+        -CAROUSEL_WHEEL_MAX_DELTA_PER_FRAME,
+        Math.min(CAROUSEL_WHEEL_MAX_DELTA_PER_FRAME, pendingWheelDelta),
+      );
+      pendingWheelDelta = 0;
+      pendingWheelDirection = 0;
+      if (!sceneReady) {
+        const nextStep = accumulateWheelSteps(staticWheelAccumulator.current, delta, STATIC_WHEEL_STEP_PX);
+        staticWheelAccumulator.current = nextStep.remainder;
+        if (nextStep.steps !== 0) commandProject(activeIndexRef.current + nextStep.steps);
+        scheduleSceneUpgrade();
+        return;
+      }
+      publishCarouselWheelMotion(delta);
+    };
+
     const handleWheel = (event: WheelEvent) => {
       if (openingIndex !== null) return;
-      const delta = event.deltaY;
+      const delta = normalizeWheelDelta({
+        deltaX: event.deltaX,
+        deltaY: event.deltaY,
+        deltaMode: event.deltaMode,
+        lineHeight,
+        pageHeight: element.clientHeight,
+      });
       if (delta === 0) return;
-      event.preventDefault();
-      requestScene();
-      if (reducedMotion) {
+      if (document.hidden) return;
+
+      if (sceneReady && reducedMotion) {
         const now = performance.now();
         if (now - lastReducedMotionStep >= REDUCED_MOTION_WHEEL_INTERVAL_MS) {
           lastReducedMotionStep = now;
@@ -247,21 +327,24 @@ export default function ProjectCarousel({ projects }: Props) {
         return;
       }
 
-      if (document.hidden) return;
-      const normalizedDelta = Math.max(-WHEEL_MAX_DELTA_PER_FRAME, Math.min(WHEEL_MAX_DELTA_PER_FRAME, delta));
-      window.dispatchEvent(new CustomEvent<CarouselWheelMotionDetail>(CAROUSEL_WHEEL_MOTION_EVENT, {
-        detail: { delta: normalizedDelta },
-      }));
+      const direction = Math.sign(delta);
+      if (pendingWheelDirection !== 0 && direction !== pendingWheelDirection) pendingWheelDelta = 0;
+      pendingWheelDirection = direction;
+      pendingWheelDelta += delta;
+      if (wheelFrame === undefined) wheelFrame = window.requestAnimationFrame(flushWheelMotion);
     };
 
-    element.addEventListener("wheel", handleWheel, { passive: false });
-    return () => element.removeEventListener("wheel", handleWheel);
-  }, [moveBy, openingIndex, reducedMotion, renderState, requestScene]);
+    element.addEventListener("wheel", handleWheel, { passive: true });
+    return () => {
+      element.removeEventListener("wheel", handleWheel);
+      if (wheelFrame !== undefined) window.cancelAnimationFrame(wheelFrame);
+    };
+  }, [commandProject, moveBy, openingIndex, reducedMotion, renderState, sceneReady, scheduleSceneUpgrade]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
     if ((event.target as HTMLElement).closest("a, button")) return;
-    requestScene();
+    scheduleSceneUpgrade();
     drag.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -307,8 +390,8 @@ export default function ProjectCarousel({ projects }: Props) {
       ArrowUp: () => moveBy(-1),
       ArrowRight: () => moveBy(1),
       ArrowDown: () => moveBy(1),
-      Home: () => activateProject(0),
-      End: () => activateProject(filteredProjects.length - 1),
+      Home: () => commandProject(0),
+      End: () => commandProject(filteredProjects.length - 1),
     };
     const action = actions[event.key];
     if (!action) return;
@@ -321,7 +404,10 @@ export default function ProjectCarousel({ projects }: Props) {
     setSceneHasTexture(false);
     setSceneEnabled(false);
   }, []);
-  const markSceneReady = useCallback(() => setSceneReady(true), []);
+  const markSceneReady = useCallback(() => {
+    staticWheelAccumulator.current = 0;
+    setSceneReady(true);
+  }, []);
   const markActiveTextureReady = useCallback(() => setSceneHasTexture(true), []);
 
   if (!activeProject || renderState === "fallback") return null;
@@ -382,7 +468,7 @@ export default function ProjectCarousel({ projects }: Props) {
             className={`carousel-shell__static-panel carousel-shell__static-panel--${position}`}
             href={`/projects/${project.slug}/`}
             aria-label={`Open ${project.title}`}
-            key={`${project.slug}-${previewIndex}`}
+            key={position}
             onClick={(event) => {
               if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
               event.preventDefault();
@@ -411,12 +497,12 @@ export default function ProjectCarousel({ projects }: Props) {
               <LazyCarouselScene
                 projects={filteredProjects}
                 slotCount={projects.length}
-                activeIndex={activeIndex}
+                navigationCommand={navigationCommand}
                 openingIndex={openingIndex}
                 reducedMotion={reducedMotion}
                 compactTextures={compactTextures}
                 onSelect={selectPanel}
-                onActive={activateProject}
+                onActive={reportActiveProject}
                 onReady={markSceneReady}
                 onTextureReady={markActiveTextureReady}
                 onContextLost={useStaticFallback}

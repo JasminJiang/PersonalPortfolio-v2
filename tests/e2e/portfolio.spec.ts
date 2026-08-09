@@ -64,8 +64,40 @@ test("high-frequency wheel bursts cannot queue more than one project of motion",
   await expect(heading).toHaveText(/Aeolian Resonance|Waterborne Urbanism/);
 });
 
-test("WebGL project changes do not request new carousel textures", async ({ page, isMobile }) => {
+test("opposite wheel input cancels motion queued in the old direction", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  const heading = carousel.getByRole("heading", { level: 1 });
+  await expect(carousel).toHaveAttribute("data-scene-state", "ready");
+  await expect(heading).toHaveText("Aeolian Resonance");
+
+  await carousel.evaluate((element) => {
+    for (let index = 0; index < 10; index += 1) {
+      element.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 80 }));
+    }
+  });
+  await page.waitForTimeout(32);
+  await carousel.evaluate((element) => {
+    element.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -40 }));
+  });
+
+  await page.waitForTimeout(700);
+  await expect(heading).toHaveText("Aeolian Resonance");
+});
+
+test("WebGL carousel keeps texture residency bounded while moving", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  test.setTimeout(60_000);
+  const transparentPixel = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+X3p0WQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  await page.route("https://assets.jasminjiang.com/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "image/png",
+    body: transparentPixel,
+  }));
   const carouselTextureRequests: string[] = [];
   let sceneReady = false;
   page.on("request", (request) => {
@@ -81,17 +113,29 @@ test("WebGL project changes do not request new carousel textures", async ({ page
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
   await expect(carousel).toHaveAttribute("data-scene-state", "ready");
-  await page.waitForFunction(() => performance.getEntriesByType("resource")
-    .filter((entry) => entry.name.includes("width=768")).length >= 21);
+  await expect(carousel).toHaveAttribute("data-texture-state", "ready", { timeout: 30_000 });
   await page.waitForLoadState("networkidle");
+  const initialTextureUrls = await page.evaluate(() => [...new Set(
+    performance.getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((name) => name.includes("width=768")),
+  )]);
+  expect(initialTextureUrls.length).toBeGreaterThanOrEqual(5);
+  expect(initialTextureUrls.length).toBeLessThanOrEqual(7);
   sceneReady = true;
   await carousel.hover();
   for (let index = 0; index < 8; index += 1) {
     await page.mouse.wheel(0, 40);
   }
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(800);
 
-  expect(carouselTextureRequests).toEqual([]);
+  expect([...new Set(carouselTextureRequests)].length).toBeLessThanOrEqual(3);
+  const totalTextureUrls = await page.evaluate(() => [...new Set(
+    performance.getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((name) => name.includes("width=768")),
+  )].length);
+  expect(totalTextureUrls).toBeLessThanOrEqual(10);
 });
 
 test("pointer drag changes the active project", async ({ page, isMobile }) => {

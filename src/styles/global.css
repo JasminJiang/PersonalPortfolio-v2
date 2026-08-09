@@ -1586,6 +1586,7 @@ html[data-carousel-state="ready"] .project-index {
   --home-interface-count-size: clamp(0.75rem, calc(0.684rem + 0.168vw), 0.9rem);
   height: 100svh;
   overflow: hidden;
+  overscroll-behavior: none;
   background: #fff;
   font-size: var(--home-interface-font-size);
   letter-spacing: 0.08em;
@@ -1600,7 +1601,13 @@ html[data-carousel-state="ready"] .project-index {
   position: fixed;
   inset: 0;
   height: 100svh;
+  overscroll-behavior: none;
+  touch-action: none;
   background: #fff;
+}
+
+html[data-carousel-state] {
+  overscroll-behavior: none;
 }
 
 .carousel-shell__header {

@@ -22,7 +22,6 @@ const carouselProjects = projects.map(({ data }) => {
     compactSrc: cloudflareImageUrl(cover.webR2Key, 480),
   };
 });
-const homeCover = carouselProjects[0]?.coverSrc;
 const homeStructuredData = {
   "@type": "WebSite",
   "@id": "https://jasminjiang.com/#website",
@@ -36,7 +35,6 @@ const homeStructuredData = {
   bodyClass="home-page"
   showHeader={false}
   showFooter={false}
-  preloadImage={homeCover}
   structuredData={homeStructuredData}
 >
   <CylindricalLoader />
