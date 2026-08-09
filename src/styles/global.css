@@ -315,6 +315,87 @@ main {
   letter-spacing: 0.08em;
 }
 
+.carousel-shell {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 10;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--color-white);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms var(--ease-out-expo);
+}
+
+.carousel-shell[data-state="ready"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.carousel-shell__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.carousel-shell__canvas canvas {
+  cursor: pointer;
+  touch-action: none;
+}
+
+.carousel-shell__status {
+  position: absolute;
+  bottom: calc(var(--footer-height) + 2.5rem);
+  left: var(--page-gutter);
+  z-index: 2;
+  display: grid;
+  max-width: min(46rem, calc(100vw - (2 * var(--page-gutter))));
+  gap: 0.8rem;
+  pointer-events: none;
+}
+
+.carousel-shell__status p {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+}
+
+.carousel-shell__status h1 {
+  margin: 0;
+  font-size: clamp(2.75rem, 6.5vw, 7rem);
+  font-weight: 300;
+  letter-spacing: -0.07em;
+  line-height: 0.88;
+  text-transform: none;
+}
+
+.carousel-shell__status a {
+  justify-self: start;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid currentColor;
+  font-weight: 500;
+  pointer-events: auto;
+}
+
+.carousel-shell__hint {
+  position: absolute;
+  right: var(--page-gutter);
+  bottom: calc(var(--footer-height) + 2.5rem);
+  z-index: 2;
+  margin: 0;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  pointer-events: none;
+}
+
+html[data-carousel-state="ready"] .project-index {
+  display: none;
+}
+
 .project-index {
   min-height: 100svh;
   padding: calc(var(--header-height) + 3rem) var(--page-gutter) calc(var(--footer-height) + 4rem);
@@ -710,6 +791,24 @@ main {
 
   .project-index {
     padding-top: calc(var(--header-height) + 2rem);
+  }
+
+  .carousel-shell__status {
+    bottom: calc(var(--footer-height) + 2rem);
+  }
+
+  .carousel-shell__status p {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .carousel-shell__status h1 {
+    max-width: 12ch;
+    font-size: clamp(2.75rem, 13vw, 4.75rem);
+  }
+
+  .carousel-shell__hint {
+    display: none;
   }
 
   .project-index__intro {

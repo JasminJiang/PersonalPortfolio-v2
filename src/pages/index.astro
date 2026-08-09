@@ -1,13 +1,22 @@
 ---
 import CylindricalLoader from "../components/CylindricalLoader.astro";
+import ProjectCarousel from "../components/carousel/ProjectCarousel";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 
 const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+const carouselProjects = projects.map(({ data }) => ({
+  slug: data.slug,
+  order: data.order,
+  title: data.title,
+  categoryLabel: data.categoryLabel,
+  year: data.year,
+}));
 ---
 
 <BaseLayout bodyClass="home-page">
   <CylindricalLoader />
+  <ProjectCarousel projects={carouselProjects} client:only="react" />
   <section class="project-index" aria-labelledby="portfolio-title">
     <header class="project-index__intro">
       <p class="eyebrow">Selected work · 2021–2025</p>

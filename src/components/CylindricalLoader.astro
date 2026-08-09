@@ -17,15 +17,16 @@ const glyphs = Array.from("JASMIN—XINJIE—");
 </div>
 
 <script>
-  const loader = document.querySelector<HTMLElement>("[data-portfolio-loader]");
-
   const dismissLoader = () => {
+    const loader = document.querySelector<HTMLElement>("[data-portfolio-loader]");
     if (!loader || loader.dataset.state === "complete") return;
     loader.dataset.state = "complete";
     loader.addEventListener("transitionend", () => loader.setAttribute("hidden", ""), {
       once: true,
     });
   };
+
+  document.addEventListener("astro:page-load", dismissLoader);
 
   if (document.readyState === "complete") {
     dismissLoader();
