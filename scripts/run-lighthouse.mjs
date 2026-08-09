@@ -54,7 +54,7 @@ function runAstro(arguments_, { allowFailure = false } = {}) {
 async function stopChrome(chrome) {
   if (!chrome) return;
   if (process.platform !== "win32") {
-    chrome.kill();
+    await chrome.kill();
     return;
   }
 
