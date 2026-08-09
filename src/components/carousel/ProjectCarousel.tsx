@@ -26,6 +26,7 @@ interface Props {
 }
 
 const DRAG_STEP_PX = 56;
+const AUTOMATIC_SCENE_DELAY_MS = 12_000;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
 
 class CarouselErrorBoundary extends Component<{
@@ -67,10 +68,12 @@ function projectIndexFromHash(projects: CarouselProject[]) {
 export default function ProjectCarousel({ projects }: Props) {
   const [renderState, setRenderState] = useState<"checking" | "loading" | "ready" | "fallback">("checking");
   const [sceneEnabled, setSceneEnabled] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const shell = useRef<HTMLElement>(null);
   const activeIndexRef = useRef(0);
+  const sceneRequested = useRef(false);
   const suppressPanelSelectUntil = useRef(0);
   const drag = useRef<{
     pointerId: number;
@@ -82,8 +85,14 @@ export default function ProjectCarousel({ projects }: Props) {
   const previousProject = projects[(activeIndex - 1 + projects.length) % projects.length];
   const nextProject = projects[(activeIndex + 1) % projects.length];
 
+  const requestScene = useCallback(() => {
+    if (sceneRequested.current) return;
+    sceneRequested.current = true;
+    setSceneEnabled(true);
+  }, []);
+
   useEffect(() => {
-    let sceneFrame: number | undefined;
+    let automaticSceneTimer: number | undefined;
     const setupFrame = window.requestAnimationFrame(() => {
       const initialIndex = projectIndexFromHash(projects);
       activeIndexRef.current = initialIndex;
@@ -92,16 +101,21 @@ export default function ProjectCarousel({ projects }: Props) {
         setRenderState("fallback");
         return;
       }
-      setRenderState("loading");
-      sceneFrame = window.requestAnimationFrame(() => setSceneEnabled(true));
+      setRenderState("ready");
+
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!connection?.saveData && !reduceMotion) {
+        automaticSceneTimer = window.setTimeout(requestScene, AUTOMATIC_SCENE_DELAY_MS);
+      }
     });
 
     return () => {
       window.cancelAnimationFrame(setupFrame);
-      if (sceneFrame !== undefined) window.cancelAnimationFrame(sceneFrame);
+      if (automaticSceneTimer !== undefined) window.clearTimeout(automaticSceneTimer);
       document.documentElement.removeAttribute("data-carousel-state");
     };
-  }, [projects]);
+  }, [projects, requestScene]);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -126,8 +140,9 @@ export default function ProjectCarousel({ projects }: Props) {
   }, [projects]);
 
   const moveBy = useCallback((distance: number) => {
+    requestScene();
     activateProject(activeIndexRef.current + distance);
-  }, [activateProject]);
+  }, [activateProject, requestScene]);
 
   const selectPanel = useCallback((index: number) => {
     if (performance.now() < suppressPanelSelectUntil.current) return;
@@ -165,6 +180,7 @@ export default function ProjectCarousel({ projects }: Props) {
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
     if ((event.target as HTMLElement).closest("a, button")) return;
+    requestScene();
     drag.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -220,8 +236,11 @@ export default function ProjectCarousel({ projects }: Props) {
     action();
   };
 
-  const useStaticFallback = useCallback(() => setRenderState("fallback"), []);
-  const markSceneReady = useCallback(() => setRenderState("ready"), []);
+  const useStaticFallback = useCallback(() => {
+    setSceneReady(false);
+    setSceneEnabled(false);
+  }, []);
+  const markSceneReady = useCallback(() => setSceneReady(true), []);
 
   if (!activeProject || renderState === "fallback") return null;
 
@@ -230,6 +249,7 @@ export default function ProjectCarousel({ projects }: Props) {
       ref={shell}
       className="carousel-shell"
       data-state={renderState}
+      data-scene-state={sceneReady ? "ready" : sceneEnabled ? "loading" : "deferred"}
       aria-label="Interactive project carousel"
       aria-roledescription="carousel"
       aria-describedby="carousel-instructions"
@@ -240,12 +260,25 @@ export default function ProjectCarousel({ projects }: Props) {
       onPointerUp={endPointerGesture}
       onPointerCancel={endPointerGesture}
     >
+      <div className="carousel-shell__static" aria-hidden="true">
+        {[previousProject ?? activeProject, activeProject, nextProject ?? activeProject].map((project, previewIndex) => (
+          <figure
+            className={`carousel-shell__static-panel carousel-shell__static-panel--${["previous", "active", "next"][previewIndex]}`}
+            key={`${project.slug}-${previewIndex}`}
+          >
+            <img
+              src={project.coverSrc}
+              alt=""
+              loading={previewIndex === 1 ? "eager" : "lazy"}
+              fetchPriority={previewIndex === 1 ? "high" : "low"}
+              decoding="async"
+              draggable={false}
+            />
+          </figure>
+        ))}
+      </div>
+
       <div className="carousel-shell__canvas" aria-hidden="true">
-        {renderState === "loading" && (
-          <div className="carousel-shell__skeleton">
-            {Array.from({ length: 5 }, (_, index) => <span key={index} />)}
-          </div>
-        )}
         {sceneEnabled && (
           <CarouselErrorBoundary onError={useStaticFallback}>
             <Suspense fallback={null}>
