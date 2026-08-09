@@ -83,6 +83,73 @@ test("static project index remains usable without WebGL", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Open Aeolian Resonance" })).toBeVisible();
 });
 
+test("reduced motion keeps automatic WebGL enhancement deferred", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-state", "ready");
+  await page.waitForTimeout(1_500);
+  await expect(carousel).toHaveAttribute("data-scene-state", "deferred");
+});
+
+test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-state", "ready");
+  await carousel.getByRole("button", { name: /Next project/ }).click();
+  await expect(carousel).toHaveAttribute("data-scene-state", "ready");
+  await expect(carousel.locator("canvas")).toHaveCount(1);
+
+  await carousel.getByRole("link", { name: "View project" }).click();
+  await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
+  await expect(page.locator("canvas")).toHaveCount(0);
+  const announcer = page.locator(".astro-route-announcer");
+  await expect(announcer).toHaveAttribute("aria-live", "assertive");
+  await expect(announcer).toContainText("Waterborne Urbanism");
+});
+
+test("managed videos remain mutually exclusive and respect reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.pause = function pause() {
+      const calls = Number(this.dataset.pauseCalls ?? "0");
+      this.dataset.pauseCalls = String(calls + 1);
+    };
+    HTMLMediaElement.prototype.play = function play() {
+      this.dispatchEvent(new Event("play"));
+      return Promise.resolve();
+    };
+  });
+  await page.goto("/projects/voltlab-uiux/");
+  const videos = page.locator("[data-managed-video]");
+  await expect(videos).toHaveCount(8);
+  await page.waitForTimeout(500);
+  expect(await videos.evaluateAll((items) => items.every((video) => video.dataset.loaded !== "true"))).toBe(true);
+
+  const first = videos.nth(0);
+  const second = videos.nth(1);
+  const secondBefore = Number(await second.getAttribute("data-pause-calls") ?? "0");
+  await first.evaluate((video) => (video as HTMLVideoElement).play());
+  const secondAfter = Number(await second.getAttribute("data-pause-calls") ?? "0");
+  expect(secondAfter).toBeGreaterThan(secondBefore);
+
+  const firstBefore = Number(await first.getAttribute("data-pause-calls") ?? "0");
+  await second.evaluate((video) => (video as HTMLVideoElement).play());
+  const firstAfter = Number(await first.getAttribute("data-pause-calls") ?? "0");
+  expect(firstAfter).toBeGreaterThan(firstBefore);
+});
+
+test("About remains scrollable and its closing signature is reachable", async ({ page }) => {
+  await page.goto("/about/");
+  const dimensions = await page.evaluate(() => ({
+    viewportHeight: window.innerHeight,
+    scrollHeight: document.documentElement.scrollHeight,
+  }));
+  expect(dimensions.scrollHeight).toBeGreaterThan(dimensions.viewportHeight);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect(page.locator(".about-layout__signature")).toBeInViewport();
+});
+
 for (const route of ["/", "/about/", "/projects/aeolian-resonance/", "/missing-page/"]) {
   test(`${route} has no serious accessibility issue or horizontal overflow`, async ({ page }) => {
     await page.goto(route);
