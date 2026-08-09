@@ -18,6 +18,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:lighthouse": "npm run build && node scripts/run-lighthouse.mjs",
+    "test:lighthouse:remote": "node scripts/run-lighthouse.mjs",
     "audit:repository": "node scripts/audit-repository.mjs",
     "content:import": "node scripts/import-legacy-content.mjs",
     "content:validate": "node scripts/validate-content.mjs",

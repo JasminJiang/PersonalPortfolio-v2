@@ -14,6 +14,17 @@ Pages with these settings:
 Preview deployments should remain enabled for pull requests. The site is fully
 static and does not need a server adapter, runtime binding, or R2 credential.
 
+Run the same Lighthouse thresholds against an immutable Preview deployment:
+
+```bash
+npm run test:lighthouse:remote -- --origin https://<deployment-id>.<project>.pages.dev
+```
+
+Cloudflare adds `X-Robots-Tag: noindex` to Preview deployments. The remote
+runner records the resulting SEO score but defers the SEO threshold when that
+header is present. Production URLs do not receive this exception and must pass
+the configured SEO threshold.
+
 ## Production domains
 
 Attach `jasminjiang.com` as the production custom domain. Attach

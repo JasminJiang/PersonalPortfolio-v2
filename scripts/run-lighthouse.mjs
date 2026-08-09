@@ -12,7 +12,16 @@ const chromeProfile = path.join(reportsRoot, "chrome-profile");
 const astroCli = path.join(repositoryRoot, "node_modules", "astro", "bin", "astro.mjs");
 const host = "127.0.0.1";
 const port = 4322;
-const origin = `http://${host}:${port}`;
+const originArgumentIndex = process.argv.indexOf("--origin");
+const configuredOrigin = originArgumentIndex >= 0 ? process.argv[originArgumentIndex + 1] : undefined;
+if (originArgumentIndex >= 0 && !configuredOrigin) throw new Error("--origin requires an HTTP(S) URL");
+const targetOrigin = configuredOrigin ? new URL(configuredOrigin) : new URL(`http://${host}:${port}`);
+if (!['http:', 'https:'].includes(targetOrigin.protocol)) throw new Error("--origin must use HTTP or HTTPS");
+targetOrigin.pathname = targetOrigin.pathname.replace(/\/+$/, "");
+targetOrigin.search = "";
+targetOrigin.hash = "";
+const origin = targetOrigin.toString().replace(/\/$/, "");
+const usesLocalPreview = configuredOrigin === undefined;
 const targets = [
   { name: "home", path: "/", performance: 0.8, runs: 3 },
   { name: "project", path: "/projects/aeolian-resonance/", performance: 0.9, runs: 3 },
@@ -39,7 +48,7 @@ async function waitForServer() {
   while (Date.now() < deadline) {
     try {
       const response = await fetch(origin);
-      if (response.ok) return;
+      if (response.ok) return response;
     } catch {
       // The preview process may still be binding its socket.
     }
@@ -108,11 +117,20 @@ async function stopChrome(chrome) {
 
 await mkdir(reportsRoot, { recursive: true });
 await mkdir(chromeProfile, { recursive: true });
-await runAstro(["preview", "--background", "--host", host, "--port", String(port)]);
+if (usesLocalPreview) {
+  await runAstro(["preview", "--background", "--host", host, "--port", String(port)]);
+}
 
 let chrome;
 try {
-  await waitForServer();
+  const entryResponse = await waitForServer();
+  const robotsHeader = entryResponse.headers.get("x-robots-tag") ?? "";
+  const previewNoIndex = /(?:^|[,\s])noindex(?:$|[,\s])/i.test(robotsHeader);
+  if (previewNoIndex) {
+    process.stdout.write(
+      "Origin returns X-Robots-Tag: noindex; recording SEO scores without enforcing the production SEO threshold.\n",
+    );
+  }
   chrome = await launch({
     chromePath: chromium.executablePath(),
     userDataDir: chromeProfile,
@@ -154,7 +172,7 @@ try {
       performance: target.performance,
       accessibility: 0.95,
       "best-practices": 0.95,
-      seo: 0.95,
+      ...(!previewNoIndex && { seo: 0.95 }),
     };
     for (const [category, threshold] of Object.entries(thresholds)) {
       if ((scores[category] ?? 0) < threshold) {
@@ -171,5 +189,7 @@ try {
   } catch (error) {
     process.stderr.write(`Chrome cleanup warning: ${error instanceof Error ? error.message : String(error)}\n`);
   }
-  await runAstro(["preview", "stop", "--port", String(port)], { allowFailure: true });
+  if (usesLocalPreview) {
+    await runAstro(["preview", "stop", "--port", String(port)], { allowFailure: true });
+  }
 }
