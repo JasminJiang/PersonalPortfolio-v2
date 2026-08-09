@@ -116,3 +116,4 @@ jobs:
           name: lighthouse-reports
           path: .lighthouse-reports/
           if-no-files-found: ignore
+          include-hidden-files: true

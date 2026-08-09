@@ -14,9 +14,25 @@ const host = "127.0.0.1";
 const port = 4322;
 const origin = `http://${host}:${port}`;
 const targets = [
-  { name: "home", path: "/", performance: 0.8 },
-  { name: "project", path: "/projects/aeolian-resonance/", performance: 0.9 },
+  { name: "home", path: "/", performance: 0.8, runs: 3 },
+  { name: "project", path: "/projects/aeolian-resonance/", performance: 0.9, runs: 3 },
 ];
+
+const diagnosticAudits = [
+  "first-contentful-paint",
+  "largest-contentful-paint",
+  "speed-index",
+  "total-blocking-time",
+  "cumulative-layout-shift",
+];
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const midpoint = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[midpoint - 1] + sorted[midpoint]) / 2
+    : sorted[midpoint];
+}
 
 async function waitForServer() {
   const deadline = Date.now() + 30_000;
@@ -105,15 +121,34 @@ try {
 
   const failures = [];
   for (const target of targets) {
-    const result = await lighthouse(`${origin}${target.path}`, {
-      port: chrome.port,
-      output: "json",
-      logLevel: "error",
-      onlyCategories: ["performance", "accessibility", "best-practices", "seo"],
-    });
-    if (!result) throw new Error(`Lighthouse returned no result for ${target.path}`);
+    const results = [];
+    for (let run = 1; run <= target.runs; run += 1) {
+      const result = await lighthouse(`${origin}${target.path}`, {
+        port: chrome.port,
+        output: "json",
+        logLevel: "error",
+        onlyCategories: ["performance", "accessibility", "best-practices", "seo"],
+      });
+      if (!result) throw new Error(`Lighthouse returned no result for ${target.path}`);
+      const scores = Object.fromEntries(
+        Object.entries(result.lhr.categories).map(([id, category]) => [id, category.score ?? 0]),
+      );
+      const diagnostics = Object.fromEntries(
+        diagnosticAudits.map((id) => [id, result.lhr.audits[id]?.numericValue ?? null]),
+      );
+      results.push({ scores, diagnostics });
+      await writeFile(path.join(reportsRoot, `${target.name}-${run}.json`), result.report, "utf8");
+      process.stdout.write(
+        `${target.name} run ${run}/${target.runs}: ${JSON.stringify({ scores, diagnostics })}\n`,
+      );
+    }
+
+    const categoryNames = Object.keys(results[0].scores);
     const scores = Object.fromEntries(
-      Object.entries(result.lhr.categories).map(([id, category]) => [id, category.score ?? 0]),
+      categoryNames.map((category) => [
+        category,
+        median(results.map((result) => result.scores[category] ?? 0)),
+      ]),
     );
     const thresholds = {
       performance: target.performance,
@@ -126,8 +161,7 @@ try {
         failures.push(`${target.name} ${category}: ${scores[category]} < ${threshold}`);
       }
     }
-    await writeFile(path.join(reportsRoot, `${target.name}.json`), result.report, "utf8");
-    process.stdout.write(`${target.name}: ${JSON.stringify(scores)}\n`);
+    process.stdout.write(`${target.name} median: ${JSON.stringify(scores)}\n`);
   }
 
   if (failures.length) throw new Error(`Lighthouse thresholds failed:\n${failures.join("\n")}`);
