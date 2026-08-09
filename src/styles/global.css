@@ -1,10 +1,52 @@
-@import "@fontsource/poppins/300.css";
-@import "@fontsource/poppins/400.css";
-@import "@fontsource/poppins/500.css";
-@import "@fontsource/poppins/600.css";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url("@fontsource/poppins/files/poppins-latin-300-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("@fontsource/poppins/files/poppins-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("@fontsource/poppins/files/poppins-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("@fontsource/poppins/files/poppins-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}
 
 @theme {
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
@@ -175,7 +217,7 @@ main {
 }
 
 .site-header__nav a:not([aria-current="page"]) {
-  opacity: 0.38;
+  opacity: 0.58;
 }
 
 .site-header__nav a:hover,
@@ -325,12 +367,15 @@ main {
   background: var(--color-white);
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
   transition: opacity 500ms var(--ease-out-expo);
 }
 
+.carousel-shell[data-state="loading"],
 .carousel-shell[data-state="ready"] {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 .carousel-shell:focus-visible {
@@ -350,6 +395,40 @@ main {
 .carousel-shell__canvas canvas {
   cursor: pointer;
   touch-action: none;
+}
+
+.carousel-shell__skeleton {
+  position: absolute;
+  top: 38%;
+  right: -8vw;
+  left: -8vw;
+  display: flex;
+  justify-content: center;
+  gap: 1.75vw;
+  perspective: 70rem;
+}
+
+.carousel-shell__skeleton span {
+  position: relative;
+  flex: 0 0 clamp(12rem, 22vw, 24rem);
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--color-line);
+  background: #e8e7e4;
+  transform: rotateY(-3deg);
+}
+
+.carousel-shell__skeleton span::before {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 3.5rem;
+  height: 2px;
+  background: rgb(16 16 15 / 45%);
+  content: "";
+}
+
+.carousel-shell__skeleton span:nth-child(n + 4) {
+  transform: rotateY(3deg);
 }
 
 .carousel-shell__status {
@@ -433,6 +512,7 @@ main {
   pointer-events: none;
 }
 
+html[data-carousel-state="loading"] .project-index,
 html[data-carousel-state="ready"] .project-index {
   display: none;
 }
@@ -535,15 +615,31 @@ html[data-carousel-state="ready"] .project-index {
   text-align: right;
 }
 
-.media-placeholder {
+.media-frame {
+  position: relative;
   width: 100%;
   margin: 0;
+  overflow: hidden;
+  aspect-ratio: var(--media-ratio);
+  background: var(--color-paper);
 }
 
-.media-placeholder__surface {
-  display: flex;
+.media-frame__asset {
+  display: block;
   width: 100%;
-  aspect-ratio: var(--media-ratio);
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 240ms ease;
+}
+
+.media-frame--video .media-frame__asset {
+  background: #11110f;
+}
+
+.media-frame__fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
@@ -555,18 +651,28 @@ html[data-carousel-state="ready"] .project-index {
   font-family: var(--font-mono);
   font-size: 0.5625rem;
   letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.media-placeholder--video .media-placeholder__surface {
-  background-color: #11110f;
-  color: rgb(255 255 255 / 62%);
+.media-frame--error .media-frame__asset {
+  opacity: 0;
 }
 
-.media-placeholder figcaption {
-  padding-top: 0.5rem;
-  color: var(--color-muted);
+.media-frame--error .media-frame__fallback {
+  opacity: 1;
+}
+
+.media-frame figcaption {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  padding: 0.45rem 0.6rem;
+  background: rgb(16 16 15 / 72%);
   font-family: var(--font-mono);
   font-size: 0.5625rem;
+  color: rgb(255 255 255 / 76%);
 }
 
 .project-detail {
@@ -628,7 +734,7 @@ html[data-carousel-state="ready"] .project-index {
   text-transform: none;
 }
 
-.project-detail__hero > .media-placeholder {
+.project-detail__hero > .media-frame {
   align-self: end;
 }
 
@@ -729,13 +835,17 @@ html[data-carousel-state="ready"] .project-index {
   background: var(--color-paper);
 }
 
-.about-layout__portrait .media-placeholder,
-.about-layout__portrait .media-placeholder__surface {
+.about-layout__portrait .media-frame,
+.about-layout__portrait .media-frame__asset {
   height: 100%;
 }
 
-.about-layout__portrait .media-placeholder__surface {
+.about-layout__portrait .media-frame {
   aspect-ratio: auto;
+}
+
+.about-layout__portrait .media-frame__asset {
+  object-fit: cover;
 }
 
 .about-layout__content {

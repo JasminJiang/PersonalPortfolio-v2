@@ -1,18 +1,16 @@
-import { Canvas, type ThreeEvent, useFrame } from "@react-three/fiber";
 import {
   Component,
   type ErrorInfo,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import type { Group, Mesh, MeshBasicMaterial } from "three";
-import { MathUtils } from "three";
 
 export interface CarouselProject {
   slug: string;
@@ -20,15 +18,15 @@ export interface CarouselProject {
   title: string;
   categoryLabel: string;
   year: number;
+  coverSrc: string;
 }
 
 interface Props {
   projects: CarouselProject[];
 }
 
-const FULL_TURN = Math.PI * 2;
-const CAROUSEL_RADIUS = 30;
 const DRAG_STEP_PX = 56;
+const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
 
 class CarouselErrorBoundary extends Component<{
   children: ReactNode;
@@ -52,7 +50,9 @@ class CarouselErrorBoundary extends Component<{
 function supportsWebGL() {
   try {
     const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+    const context = canvas.getContext("webgl2") || canvas.getContext("webgl");
+    context?.getExtension("WEBGL_lose_context")?.loseContext();
+    return Boolean(context);
   } catch {
     return false;
   }
@@ -64,121 +64,14 @@ function projectIndexFromHash(projects: CarouselProject[]) {
   return index >= 0 ? index : 0;
 }
 
-function CarouselPanel({
-  project,
-  index,
-  slotCount,
-  active,
-  reducedMotion,
-  onSelect,
-}: {
-  project: CarouselProject;
-  index: number;
-  slotCount: number;
-  active: boolean;
-  reducedMotion: boolean;
-  onSelect: (index: number) => void;
-}) {
-  const panel = useRef<Mesh>(null);
-  const surface = useRef<MeshBasicMaterial>(null);
-  const angle = -((index / slotCount) * FULL_TURN);
-  const x = Math.sin(angle) * CAROUSEL_RADIUS;
-  const z = Math.cos(angle) * CAROUSEL_RADIUS;
-  const shade = 0.925 + ((project.order * 7) % 6) * 0.009;
-
-  useFrame((_, delta) => {
-    if (!panel.current || !surface.current) return;
-    const scale = active ? 1.08 : 1;
-    if (reducedMotion) {
-      panel.current.scale.set(scale, scale, 1);
-      surface.current.opacity = active ? 1 : 0.72;
-      return;
-    }
-    panel.current.scale.x = MathUtils.damp(panel.current.scale.x, scale, 7, delta);
-    panel.current.scale.y = MathUtils.damp(panel.current.scale.y, scale, 7, delta);
-    surface.current.opacity = MathUtils.damp(surface.current.opacity, active ? 1 : 0.72, 8, delta);
-  });
-
-  const handleSelect = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
-    onSelect(index);
-  };
-
-  return (
-    <group position={[x, 0, z]} rotation={[0, angle + Math.PI, 0]}>
-      <mesh position={[0, 0, -0.035]}>
-        <planeGeometry args={[8.14, 4.64]} />
-        <meshBasicMaterial color="#10100f" transparent opacity={active ? 0.72 : 0.18} />
-      </mesh>
-
-      <mesh ref={panel} onClick={handleSelect}>
-        <planeGeometry args={[8, 4.5, 24, 1]} />
-        <meshBasicMaterial ref={surface} color={[shade, shade, shade - 0.018]} transparent side={2} />
-
-        <mesh position={[-2.84, 1.6, 0.012]}>
-          <planeGeometry args={[1.82, 0.08]} />
-          <meshBasicMaterial color="#10100f" transparent opacity={0.58} />
-        </mesh>
-        <mesh position={[-2.55, -1.62, 0.012]}>
-          <planeGeometry args={[2.4, 0.045]} />
-          <meshBasicMaterial color="#10100f" transparent opacity={0.22} />
-        </mesh>
-        <mesh position={[2.95, -1.62, 0.012]}>
-          <planeGeometry args={[1.25, 0.045]} />
-          <meshBasicMaterial color="#10100f" transparent opacity={0.22} />
-        </mesh>
-      </mesh>
-    </group>
-  );
-}
-
-function CarouselRing({ projects, activeIndex, reducedMotion, onSelect }: {
-  projects: CarouselProject[];
-  activeIndex: number;
-  reducedMotion: boolean;
-  onSelect: (index: number) => void;
-}) {
-  const ring = useRef<Group>(null);
-  const itemAngle = -((activeIndex / projects.length) * FULL_TURN);
-  const targetRotation = Math.PI - itemAngle;
-
-  useFrame((_, delta) => {
-    if (!ring.current) return;
-    const current = ring.current.rotation.y;
-    const turns = Math.round((current - targetRotation) / FULL_TURN);
-    const nearestTarget = targetRotation + turns * FULL_TURN;
-    if (reducedMotion) {
-      ring.current.rotation.y = nearestTarget;
-      return;
-    }
-    ring.current.rotation.y = MathUtils.damp(current, nearestTarget, 5.5, delta);
-  });
-
-  return (
-    <group ref={ring} rotation={[0, targetRotation, 0]}>
-      {projects.map((project, index) => (
-        <CarouselPanel
-          key={project.slug}
-          project={project}
-          index={index}
-          slotCount={projects.length}
-          active={index === activeIndex}
-          reducedMotion={reducedMotion}
-          onSelect={onSelect}
-        />
-      ))}
-    </group>
-  );
-}
-
 export default function ProjectCarousel({ projects }: Props) {
   const [renderState, setRenderState] = useState<"checking" | "loading" | "ready" | "fallback">("checking");
+  const [sceneEnabled, setSceneEnabled] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const shell = useRef<HTMLElement>(null);
   const activeIndexRef = useRef(0);
   const suppressPanelSelectUntil = useRef(0);
-  const contextCleanup = useRef<(() => void) | null>(null);
   const drag = useRef<{
     pointerId: number;
     startX: number;
@@ -190,13 +83,22 @@ export default function ProjectCarousel({ projects }: Props) {
   const nextProject = projects[(activeIndex + 1) % projects.length];
 
   useEffect(() => {
-    const initialIndex = projectIndexFromHash(projects);
-    activeIndexRef.current = initialIndex;
-    setActiveIndex(initialIndex);
-    setRenderState(supportsWebGL() ? "loading" : "fallback");
+    let sceneFrame: number | undefined;
+    const setupFrame = window.requestAnimationFrame(() => {
+      const initialIndex = projectIndexFromHash(projects);
+      activeIndexRef.current = initialIndex;
+      setActiveIndex(initialIndex);
+      if (!supportsWebGL()) {
+        setRenderState("fallback");
+        return;
+      }
+      setRenderState("loading");
+      sceneFrame = window.requestAnimationFrame(() => setSceneEnabled(true));
+    });
 
     return () => {
-      contextCleanup.current?.();
+      window.cancelAnimationFrame(setupFrame);
+      if (sceneFrame !== undefined) window.cancelAnimationFrame(sceneFrame);
       document.documentElement.removeAttribute("data-carousel-state");
     };
   }, [projects]);
@@ -234,7 +136,7 @@ export default function ProjectCarousel({ projects }: Props) {
 
   useEffect(() => {
     const element = shell.current;
-    if (!element || renderState !== "ready") return;
+    if (!element || renderState === "checking" || renderState === "fallback") return;
 
     let accumulatedDelta = 0;
     let locked = false;
@@ -319,8 +221,7 @@ export default function ProjectCarousel({ projects }: Props) {
   };
 
   const useStaticFallback = useCallback(() => setRenderState("fallback"), []);
-
-  const canvasCamera = useMemo(() => ({ position: [0, 0, 5] as [number, number, number], fov: 36 }), []);
+  const markSceneReady = useCallback(() => setRenderState("ready"), []);
 
   if (!activeProject || renderState === "fallback") return null;
 
@@ -332,7 +233,7 @@ export default function ProjectCarousel({ projects }: Props) {
       aria-label="Interactive project carousel"
       aria-roledescription="carousel"
       aria-describedby="carousel-instructions"
-      tabIndex={0}
+      tabIndex={renderState === "checking" ? -1 : 0}
       onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -340,28 +241,23 @@ export default function ProjectCarousel({ projects }: Props) {
       onPointerCancel={endPointerGesture}
     >
       <div className="carousel-shell__canvas" aria-hidden="true">
-        {renderState !== "checking" && (
+        {renderState === "loading" && (
+          <div className="carousel-shell__skeleton">
+            {Array.from({ length: 5 }, (_, index) => <span key={index} />)}
+          </div>
+        )}
+        {sceneEnabled && (
           <CarouselErrorBoundary onError={useStaticFallback}>
-            <Canvas
-              camera={canvasCamera}
-              gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
-              onCreated={({ gl }) => {
-                const canvas = gl.domElement;
-                const handleContextLoss = () => setRenderState("fallback");
-                canvas.addEventListener("webglcontextlost", handleContextLoss, { once: true });
-                contextCleanup.current?.();
-                contextCleanup.current = () => canvas.removeEventListener("webglcontextlost", handleContextLoss);
-                setRenderState("ready");
-              }}
-            >
-              <color attach="background" args={["#ffffff"]} />
-              <CarouselRing
+            <Suspense fallback={null}>
+              <LazyCarouselScene
                 projects={projects}
                 activeIndex={activeIndex}
                 reducedMotion={reducedMotion}
                 onSelect={selectPanel}
+                onReady={markSceneReady}
+                onContextLost={useStaticFallback}
               />
-            </Canvas>
+            </Suspense>
           </CarouselErrorBoundary>
         )}
       </div>

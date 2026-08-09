@@ -2,8 +2,13 @@
 import type { GetStaticPaths } from "astro";
 import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
-import MediaPlaceholder from "../../components/MediaPlaceholder.astro";
+import CloudflareMedia from "../../components/CloudflareMedia.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  cloudflareImageSrcSet,
+  cloudflareImageUrl,
+  defaultResponsiveImageWidth,
+} from "../../lib/cloudflare-media";
 import { mediaById } from "../../lib/media-manifest";
 import type { MediaManifestItem } from "../../types/media";
 
@@ -37,6 +42,8 @@ if (media.length !== project.data.mediaIds.length) throw new Error(`Media manife
 
 const [cover, ...details] = media;
 if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
+const coverPreloadImage = cloudflareImageUrl(cover.webR2Key, defaultResponsiveImageWidth(cover, true));
+const coverSizes = "(max-width: 42rem) calc(100vw - 2rem), calc(100vw - 4rem)";
 ---
 
 <BaseLayout
@@ -45,6 +52,9 @@ if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
   bodyClass="project-page"
   showHeader={false}
   showFooter={false}
+  preloadImage={coverPreloadImage}
+  preloadImageSrcSet={cloudflareImageSrcSet(cover)}
+  preloadImageSizes={coverSizes}
 >
   <article class="project-detail">
     <nav class="project-detail__topbar" aria-label="Project navigation">
@@ -58,7 +68,7 @@ if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
         <p class="eyebrow">{project.data.categoryLabel} · {project.data.year}</p>
         <h1>{project.data.title}</h1>
       </div>
-      <MediaPlaceholder media={cover} eager />
+      <CloudflareMedia media={cover} eager sizes={coverSizes} />
     </header>
 
     <div class="project-detail__information">
@@ -79,7 +89,7 @@ if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
 
     {details.length > 0 && (
       <section class="project-detail__gallery" aria-label={`${project.data.title} media`}>
-        {details.map((item) => <MediaPlaceholder media={item} />)}
+        {details.map((item) => <CloudflareMedia media={item} />)}
       </section>
     )}
 

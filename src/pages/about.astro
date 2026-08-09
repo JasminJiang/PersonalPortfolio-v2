@@ -1,10 +1,20 @@
 ---
-import MediaPlaceholder from "../components/MediaPlaceholder.astro";
+import CloudflareMedia from "../components/CloudflareMedia.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  cloudflareImageSrcSet,
+  cloudflareImageUrl,
+  defaultResponsiveImageWidth,
+} from "../lib/cloudflare-media";
 import { mediaById } from "../lib/media-manifest";
 
 const portrait = mediaById.get("about--portrait");
 if (!portrait) throw new Error("About portrait is missing from the media manifest");
+const portraitPreloadImage = cloudflareImageUrl(
+  portrait.webR2Key,
+  defaultResponsiveImageWidth(portrait, true),
+);
+const portraitSizes = "(max-width: 42rem) 100vw, 42vw";
 ---
 
 <BaseLayout
@@ -12,10 +22,13 @@ if (!portrait) throw new Error("About portrait is missing from the media manifes
   description="About Jasmin Xinjie Jiang, a multidisciplinary designer working across physical architecture and digital interfaces."
   bodyClass="about-page"
   showFooter={false}
+  preloadImage={portraitPreloadImage}
+  preloadImageSrcSet={cloudflareImageSrcSet(portrait)}
+  preloadImageSizes={portraitSizes}
 >
   <article class="about-layout">
     <div class="about-layout__portrait" transition:name="about-portrait">
-      <MediaPlaceholder media={portrait} eager />
+      <CloudflareMedia media={portrait} eager sizes={portraitSizes} />
     </div>
 
     <div class="about-layout__content">

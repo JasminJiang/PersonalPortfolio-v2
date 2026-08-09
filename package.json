@@ -17,7 +17,11 @@
     "content:import": "node scripts/import-legacy-content.mjs",
     "content:validate": "node scripts/validate-content.mjs",
     "media:prepare": "node scripts/prepare-media.mjs",
+    "media:validate-prepared": "node scripts/validate-prepared-media.mjs",
     "media:upload-plan": "node scripts/create-r2-upload-plan.mjs",
+    "media:verify-public": "node scripts/verify-public-media.mjs",
+    "media:verify-originals": "node scripts/verify-originals-r2.mjs",
+    "media:verify-web-r2": "node scripts/verify-web-r2.mjs",
     "verify": "npm run check && npm run build"
   },
   "dependencies": {
@@ -37,6 +41,7 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
-    "vite": "8.2.1"
+    "vite": "8.2.1",
+    "wrangler": "^4.120.0"
   }
 }

@@ -3,20 +3,28 @@ import CylindricalLoader from "../components/CylindricalLoader.astro";
 import ProjectCarousel from "../components/carousel/ProjectCarousel";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
+import { cloudflareImageUrl } from "../lib/cloudflare-media";
+import { mediaById } from "../lib/media-manifest";
 
 const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
-const carouselProjects = projects.map(({ data }) => ({
-  slug: data.slug,
-  order: data.order,
-  title: data.title,
-  categoryLabel: data.categoryLabel,
-  year: data.year,
-}));
+const carouselProjects = projects.map(({ data }) => {
+  const cover = mediaById.get(data.coverMediaId);
+  if (!cover) throw new Error(`Cover media is missing for ${data.slug}`);
+  return {
+    slug: data.slug,
+    order: data.order,
+    title: data.title,
+    categoryLabel: data.categoryLabel,
+    year: data.year,
+    coverSrc: cloudflareImageUrl(cover.webR2Key, 1280),
+  };
+});
+const homeCover = carouselProjects[0]?.coverSrc;
 ---
 
-<BaseLayout bodyClass="home-page">
+<BaseLayout bodyClass="home-page" preloadImage={homeCover}>
   <CylindricalLoader />
-  <ProjectCarousel projects={carouselProjects} client:only="react" />
+  <ProjectCarousel projects={carouselProjects} client:idle={{ timeout: 600 }} />
   <section class="project-index" aria-labelledby="portfolio-title">
     <header class="project-index__intro">
       <p class="eyebrow">Selected work · 2021–2025</p>

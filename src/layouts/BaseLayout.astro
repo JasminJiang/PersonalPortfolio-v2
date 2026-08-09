@@ -10,6 +10,9 @@ interface Props {
   showHeader?: boolean;
   showFooter?: boolean;
   bodyClass?: string;
+  preloadImage?: string;
+  preloadImageSrcSet?: string;
+  preloadImageSizes?: string;
 }
 
 const {
@@ -18,6 +21,9 @@ const {
   showHeader = true,
   showFooter = true,
   bodyClass = "",
+  preloadImage,
+  preloadImageSrcSet,
+  preloadImageSizes,
 } = Astro.props;
 ---
 
@@ -28,6 +34,20 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
+    <link rel="dns-prefetch" href="//assets.jasminjiang.com" />
+    <link rel="preconnect" href="https://assets.jasminjiang.com" crossorigin />
+    {
+      preloadImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadImage}
+          imagesrcset={preloadImageSrcSet}
+          imagesizes={preloadImageSizes}
+          fetchpriority="high"
+        />
+      )
+    }
     <title>{title}</title>
     <ClientRouter />
     <slot name="head" />

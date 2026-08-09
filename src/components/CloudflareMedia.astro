@@ -1,0 +1,162 @@
+---
+import {
+  cloudflareImageSrcSet,
+  cloudflareImageUrl,
+  defaultResponsiveImageWidth,
+  publicAssetUrl,
+} from "../lib/cloudflare-media";
+import type { MediaManifestItem } from "../types/media";
+
+interface Props {
+  media: MediaManifestItem;
+  eager?: boolean;
+  sizes?: string;
+  class?: string;
+}
+
+const {
+  media,
+  eager = false,
+  sizes = "(max-width: 42rem) calc(100vw - 2rem), min(88rem, calc(100vw - 4rem))",
+  class: className = "",
+} = Astro.props;
+const defaultWidth = defaultResponsiveImageWidth(media, eager);
+const imageSource = media.kind === "image" ? cloudflareImageUrl(media.webR2Key, defaultWidth) : "";
+const videoSource = media.kind === "video" ? publicAssetUrl(media.webR2Key) : "";
+const posterSource = media.posterR2Key ? cloudflareImageUrl(media.posterR2Key, 1920) : undefined;
+---
+
+<figure
+  class:list={["media-frame", className, { "media-frame--video": media.kind === "video" }]}
+  style={`--media-ratio: ${media.width} / ${media.height}`}
+  data-cf-media
+  data-media-id={media.id}
+>
+  {
+    media.kind === "image" ? (
+      <img
+        class="media-frame__asset"
+        src={imageSource}
+        srcset={cloudflareImageSrcSet(media)}
+        sizes={sizes}
+        width={media.width}
+        height={media.height}
+        alt={media.alt}
+        loading={eager ? "eager" : "lazy"}
+        fetchpriority={eager ? "high" : "auto"}
+        decoding="async"
+        draggable="false"
+        data-cf-image
+      />
+    ) : (
+      <video
+        class="media-frame__asset"
+        width={media.width}
+        height={media.height}
+        poster={posterSource}
+        preload="none"
+        muted
+        loop
+        controls
+        playsinline
+        aria-label={media.alt}
+        data-managed-video
+      >
+        <source src={videoSource} type="video/mp4" />
+        Your browser does not support HTML video.
+      </video>
+    )
+  }
+
+  <div class="media-frame__fallback" aria-hidden="true">
+    <span>Media unavailable</span>
+    <span>{media.width} × {media.height}</span>
+  </div>
+
+  {media.kind === "video" && <figcaption>Motion media · use the player controls for audio</figcaption>}
+</figure>
+
+<script>
+  let cleanupManagedMedia = () => {};
+
+  const initializeManagedMedia = () => {
+    cleanupManagedMedia();
+
+    const images = Array.from(document.querySelectorAll<HTMLImageElement>("[data-cf-image]"));
+    const videos = Array.from(document.querySelectorAll<HTMLVideoElement>("[data-managed-video]"));
+    const cleanups: Array<() => void> = [];
+
+    const markUnavailable = (event: Event) => {
+      (event.currentTarget as HTMLElement).closest<HTMLElement>("[data-cf-media]")?.classList.add("media-frame--error");
+    };
+
+    images.forEach((image) => {
+      image.addEventListener("error", markUnavailable, { once: true });
+      if (image.complete && image.naturalWidth === 0) {
+        image.closest<HTMLElement>("[data-cf-media]")?.classList.add("media-frame--error");
+      }
+      cleanups.push(() => image.removeEventListener("error", markUnavailable));
+    });
+
+    videos.forEach((video) => {
+      video.addEventListener("error", markUnavailable, { once: true });
+      if (video.error) video.closest<HTMLElement>("[data-cf-media]")?.classList.add("media-frame--error");
+      const keepExclusive = () => {
+        videos.forEach((candidate) => {
+          if (candidate !== video) candidate.pause();
+        });
+      };
+      video.addEventListener("play", keepExclusive);
+      cleanups.push(() => {
+        video.pause();
+        video.removeEventListener("error", markUnavailable);
+        video.removeEventListener("play", keepExclusive);
+      });
+    });
+
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    const protectData = connection?.saveData === true;
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const reduceMotion = motionPreference.matches;
+    let observer: IntersectionObserver | undefined;
+
+    if (!protectData && !reduceMotion && "IntersectionObserver" in window) {
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target as HTMLVideoElement;
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+            videos.forEach((candidate) => {
+              if (candidate !== video) candidate.pause();
+            });
+            if (video.dataset.loaded !== "true") {
+              video.dataset.loaded = "true";
+              video.preload = "metadata";
+              video.load();
+            }
+            void video.play().catch(() => undefined);
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: [0, 0.55, 1] });
+      videos.forEach((video) => observer?.observe(video));
+    }
+
+    const pauseWhenHidden = () => {
+      if (document.hidden) videos.forEach((video) => video.pause());
+    };
+    document.addEventListener("visibilitychange", pauseWhenHidden);
+    motionPreference.addEventListener("change", initializeManagedMedia, { once: true });
+
+    cleanupManagedMedia = () => {
+      observer?.disconnect();
+      document.removeEventListener("visibilitychange", pauseWhenHidden);
+      motionPreference.removeEventListener("change", initializeManagedMedia);
+      cleanups.forEach((cleanup) => cleanup());
+    };
+  };
+
+  document.addEventListener("astro:before-swap", () => cleanupManagedMedia());
+  document.addEventListener("astro:page-load", initializeManagedMedia);
+  initializeManagedMedia();
+</script>

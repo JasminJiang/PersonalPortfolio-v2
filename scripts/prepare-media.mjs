@@ -61,7 +61,7 @@ for (const [index, item] of manifest.items.entries()) {
     await run(args.ffmpeg || "ffmpeg", [
       "-y", "-ss", "0", "-i", source, "-frames:v", "1",
       "-vf", "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2",
-      "-q:v", "2", posterOutput,
+      "-q:v", "2", "-update", "1", posterOutput,
     ]);
   }
 
