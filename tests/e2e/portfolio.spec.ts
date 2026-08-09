@@ -147,10 +147,10 @@ test("home interface type remains readable in a split-screen viewport", async ({
     };
   });
 
-  expect(sizes.filter).toBeGreaterThanOrEqual(11);
-  expect(sizes.count).toBeGreaterThanOrEqual(10);
-  expect(sizes.about).toBeGreaterThanOrEqual(11);
-  expect(sizes.footer).toBeGreaterThanOrEqual(11);
+  expect(sizes.filter).toBeGreaterThanOrEqual(13);
+  expect(sizes.count).toBeGreaterThanOrEqual(12);
+  expect(sizes.about).toBeGreaterThanOrEqual(13);
+  expect(sizes.footer).toBeGreaterThanOrEqual(13);
   await expectNoHorizontalOverflow(page);
 });
 
