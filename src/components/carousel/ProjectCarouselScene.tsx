@@ -237,7 +237,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
       {projects.map((project, index) => {
         const directDistance = Math.abs(index - activeIndex);
         const wrappedDistance = Math.min(directDistance, projects.length - directDistance);
-        if (wrappedDistance > 3) return null;
+        if (wrappedDistance > 2) return null;
         return (
           <CarouselPanel
             key={project.slug}
