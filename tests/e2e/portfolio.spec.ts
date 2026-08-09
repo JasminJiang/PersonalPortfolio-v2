@@ -126,6 +126,34 @@ test("blank canvas keeps the default cursor", async ({ page }) => {
   await expect(canvas).toHaveCSS("cursor", "default");
 });
 
+test("home interface type remains readable in a split-screen viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 900 });
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-state", "ready");
+
+  const sizes = await page.evaluate(() => {
+    const readSize = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
+      return Number.parseFloat(getComputedStyle(element).fontSize);
+    };
+
+    return {
+      filter: readSize(".carousel-shell__filters button"),
+      count: readSize(".carousel-shell__filters button span:last-child"),
+      about: readSize(".carousel-shell__about"),
+      footer: readSize(".carousel-shell__footer"),
+    };
+  });
+
+  expect(sizes.filter).toBeGreaterThanOrEqual(11);
+  expect(sizes.count).toBeGreaterThanOrEqual(10);
+  expect(sizes.about).toBeGreaterThanOrEqual(11);
+  expect(sizes.footer).toBeGreaterThanOrEqual(11);
+  await expectNoHorizontalOverflow(page);
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });

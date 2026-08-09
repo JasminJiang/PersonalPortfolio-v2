@@ -1580,10 +1580,14 @@ html[data-carousel-state="ready"] .project-index {
 
 /* The public portfolio keeps the original site's sparse gallery composition. */
 .home-page {
+  /* Keep the sparse desktop composition readable when the browser is tiled.
+     The rem-based bounds also respect browser zoom and user font scaling. */
+  --home-interface-font-size: clamp(0.6875rem, calc(0.61rem + 0.2vw), 0.875rem);
+  --home-interface-count-size: clamp(0.625rem, calc(0.57rem + 0.14vw), 0.75rem);
   height: 100svh;
   overflow: hidden;
   background: #fff;
-  font-size: 11px;
+  font-size: var(--home-interface-font-size);
   letter-spacing: 0.08em;
 }
 
@@ -1625,7 +1629,7 @@ html[data-carousel-state="ready"] .project-index {
   background: transparent;
   color: #707070;
   cursor: pointer;
-  font-size: clamp(9px, 0.75vw, 13px);
+  font-size: var(--home-interface-font-size);
   font-weight: 500;
   letter-spacing: 0.1em;
   line-height: 1.35;
@@ -1640,7 +1644,7 @@ html[data-carousel-state="ready"] .project-index {
 
 .carousel-shell__filters button span:last-child {
   padding-top: 0.08rem;
-  font-size: clamp(7px, 0.6vw, 11px);
+  font-size: var(--home-interface-count-size);
 }
 
 .carousel-shell__filters button:hover,
@@ -1654,7 +1658,7 @@ html[data-carousel-state="ready"] .project-index {
   top: 4vh;
   right: 1.5rem;
   color: #000;
-  font-size: clamp(9px, 0.75vw, 13px);
+  font-size: var(--home-interface-font-size);
   font-weight: 500;
   letter-spacing: 0.08em;
   pointer-events: auto;
@@ -1753,7 +1757,7 @@ html[data-carousel-state="ready"] .project-index {
   align-items: flex-end;
   justify-content: space-between;
   color: rgb(0 0 0 / 40%);
-  font-size: clamp(9px, 0.75vw, 13px);
+  font-size: var(--home-interface-font-size);
   line-height: 1;
   pointer-events: none;
 }
