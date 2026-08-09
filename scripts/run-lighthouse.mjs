@@ -92,7 +92,7 @@ async function stopChrome(chrome) {
 
 await mkdir(reportsRoot, { recursive: true });
 await mkdir(chromeProfile, { recursive: true });
-await runAstro(["preview", "--host", host, "--port", String(port)]);
+await runAstro(["preview", "--background", "--host", host, "--port", String(port)]);
 
 let chrome;
 try {
