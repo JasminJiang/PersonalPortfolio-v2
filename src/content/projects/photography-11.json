@@ -1,0 +1,24 @@
+{
+  "slug": "photography-11",
+  "legacyId": "P11",
+  "order": 21,
+  "title": "Untitled Photo 11",
+  "category": "photography",
+  "categoryLabel": "Photography",
+  "year": 2024,
+  "description": [],
+  "coverMediaId": "photography-11--cover",
+  "mediaIds": [
+    "photography-11--cover",
+    "photography-11--01",
+    "photography-11--02",
+    "photography-11--03",
+    "photography-11--04",
+    "photography-11--05",
+    "photography-11--06",
+    "photography-11--07",
+    "photography-11--08",
+    "photography-11--09",
+    "photography-11--10"
+  ]
+}

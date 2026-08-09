@@ -1,19 +1,83 @@
 ---
-import "../styles/global.css";
+import CylindricalLoader from "../components/CylindricalLoader.astro";
+import ProjectCarousel from "../components/carousel/ProjectCarousel";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { cloudflareImageUrl } from "../lib/cloudflare-media";
+import { mediaById } from "../lib/media-manifest";
+
+const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+const carouselProjects = projects.map(({ data }) => {
+  const cover = mediaById.get(data.coverMediaId);
+  if (!cover) throw new Error(`Cover media is missing for ${data.slug}`);
+  return {
+    slug: data.slug,
+    order: data.order,
+    title: data.title,
+    categoryLabel: data.categoryLabel,
+    year: data.year,
+    coverSrc: cloudflareImageUrl(cover.webR2Key, 1280),
+  };
+});
+const homeCover = carouselProjects[0]?.coverSrc;
+const homeStructuredData = {
+  "@type": "WebSite",
+  "@id": "https://jasminjiang.com/#website",
+  name: "Jasmin Xinjie Jiang — Portfolio",
+  url: "https://jasminjiang.com",
+  author: { "@id": "https://jasminjiang.com/#person" },
+};
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Jasmin Xinjie Jiang</title>
-  </head>
-  <body>
-    <main>
-      <p>Astro migration baseline</p>
-      <h1>Jasmin Xinjie Jiang</h1>
-    </main>
-  </body>
-</html>
+<BaseLayout bodyClass="home-page" preloadImage={homeCover} structuredData={homeStructuredData}>
+  <CylindricalLoader />
+  <ProjectCarousel projects={carouselProjects} client:idle={{ timeout: 600 }} />
+  <section class="project-index" aria-labelledby="portfolio-title">
+    <header class="project-index__intro">
+      <p class="eyebrow">Selected work · 2021–2025</p>
+      <h1 id="portfolio-title">Space, systems<br />and experience.</h1>
+      <p>The interactive three-dimensional carousel will progressively enhance this complete static project index.</p>
+    </header>
+
+    <ol class="project-index__list">
+      {
+        projects.map((project) => (
+          <li id={project.data.slug} data-project-index-item>
+            <a
+              href={`/projects/${project.data.slug}/`}
+              data-project-link
+              data-project-slug={project.data.slug}
+              aria-label={`Open ${project.data.title}`}
+            >
+              <span class="project-index__number">{String(project.data.order).padStart(2, "0")}</span>
+              <span class="project-index__title">{project.data.title}</span>
+              <span class="project-index__meta">{project.data.categoryLabel} · {project.data.year}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</BaseLayout>
+
+<script>
+  import { navigate } from "astro:transitions/client";
+
+  const bindProjectLinks = () => {
+    document.querySelectorAll<HTMLAnchorElement>("[data-project-link]").forEach((link) => {
+      if (link.dataset.bound === "true") return;
+      link.dataset.bound = "true";
+      link.addEventListener("click", (event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const slug = link.dataset.projectSlug;
+        if (!slug) return;
+        event.preventDefault();
+        history.replaceState(history.state, "", `/#${slug}`);
+        void navigate(link.href);
+      });
+    });
+  };
+
+  document.addEventListener("astro:page-load", bindProjectLinks);
+  bindProjectLinks();
+</script>

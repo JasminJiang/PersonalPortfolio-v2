@@ -1,0 +1,21 @@
+{
+  "slug": "photography-06",
+  "legacyId": "P06",
+  "order": 16,
+  "title": "Untitled Photo 6",
+  "category": "photography",
+  "categoryLabel": "Photography",
+  "year": 2024,
+  "description": [],
+  "coverMediaId": "photography-06--cover",
+  "mediaIds": [
+    "photography-06--cover",
+    "photography-06--01",
+    "photography-06--02",
+    "photography-06--03",
+    "photography-06--04",
+    "photography-06--05",
+    "photography-06--06",
+    "photography-06--07"
+  ]
+}

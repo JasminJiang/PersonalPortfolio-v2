@@ -1,0 +1,17 @@
+{
+  "slug": "lumen-quest-vr",
+  "legacyId": "17",
+  "order": 9,
+  "title": "Lumen-Quest VR",
+  "category": "immersive-media",
+  "categoryLabel": "Immersive Media",
+  "year": 2025,
+  "location": "Munich, Germany",
+  "description": [
+    "Developed with Unreal Engine for the Meta Quest, Lumen-Quest is an immersive VR simulation designed to streamline the lighting design process. Users sit within a physical vehicle mockup while navigating a digital showroom to interactively manipulate pre-configured lighting components. By dragging and placing these modules into specific spatial coordinates, designers can instantly visualize high-fidelity light-and-shadow effects in real-time. This \"First-Person Simulation\" serves as a critical decision-making tool, allowing for the rapid evaluation of lighting schemes and architectural forms before advancing to the final development stage."
+  ],
+  "coverMediaId": "lumen-quest-vr--cover",
+  "mediaIds": [
+    "lumen-quest-vr--cover"
+  ]
+}

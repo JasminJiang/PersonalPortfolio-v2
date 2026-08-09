@@ -1,0 +1,20 @@
+---
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+const isAbout = currentPath.startsWith("/about");
+---
+
+<header class="site-header" data-site-header>
+  <a class="site-header__identity" href="/" aria-label="Jasmin Xinjie Jiang — home">
+    <span>Jasmin Xinjie Jiang</span>
+    <span class="site-header__discipline">Multidisciplinary designer</span>
+  </a>
+
+  <nav class="site-header__nav" aria-label="Primary navigation">
+    <a href="/" aria-current={!isAbout ? "page" : undefined}>Projects</a>
+    <a href="/about/" aria-current={isAbout ? "page" : undefined}>About</a>
+  </nav>
+</header>

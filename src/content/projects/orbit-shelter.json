@@ -1,0 +1,18 @@
+{
+  "slug": "orbit-shelter",
+  "legacyId": "05",
+  "order": 5,
+  "title": "Orbit Shelter",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2021,
+  "location": "Shanghai, China",
+  "description": [
+    "Orbit Shelter reimagines the traditional bus stop as a dynamic urban instrument. The core innovation lies in its pivoting structural system, which allows the seating and canopy modules to rotate around a central vertical axis. This flexibility enables the shelter to adapt to shifting environmental conditions—such as changing wind directions or sun angles—and allows users to reconfigure the space for either private waiting or social interaction.",
+    "Defined by a signature orange palette and a minimalist steel skeleton, the design balances industrial precision with user agency. The rotating planes of the shelter transform it from a passive structure into an active participant in the streetscape. By integrating movement into the architectural logic, Orbit Shelter offers a playful yet highly functional solution for the modern, ever-changing \"smart city\" environment."
+  ],
+  "coverMediaId": "orbit-shelter--cover",
+  "mediaIds": [
+    "orbit-shelter--cover"
+  ]
+}

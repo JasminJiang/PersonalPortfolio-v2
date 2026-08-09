@@ -1,0 +1,26 @@
+{
+  "slug": "ash-and-arbor",
+  "legacyId": "07",
+  "order": 7,
+  "title": "Ash & Arbor",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2022,
+  "location": "Munich, Germany",
+  "description": [
+    "This project addresses the critical conflict between traditional ancestor worship and forest conservation in the Saihanba Forest. Historically, the burning of incense and paper money during the Ching Ming Festival has been a leading cause of wildfires, while traditional burial practices often led to deforestation. Ash & Arbor proposes a modern memorial garden that preserves the sanctity of filial piety while eliminating fire risks.",
+    "The architecture is designed as a sequence of ritualistic spaces—from the Reception and Offering Hall to a specialized Burning Pavilion. This pavilion features a controlled, safe environment for traditional rituals, utilizing a sophisticated ventilation and filtration system to manage smoke and ash. By integrating these practices into a designated, fire-resistant timber structure, the project offers a new way for the local community to carry on their heritage without threatening the ecosystem they inhabit."
+  ],
+  "coverMediaId": "ash-and-arbor--cover",
+  "mediaIds": [
+    "ash-and-arbor--cover",
+    "ash-and-arbor--01",
+    "ash-and-arbor--02",
+    "ash-and-arbor--03",
+    "ash-and-arbor--04",
+    "ash-and-arbor--05",
+    "ash-and-arbor--06",
+    "ash-and-arbor--07",
+    "ash-and-arbor--08"
+  ]
+}

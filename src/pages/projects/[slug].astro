@@ -1,0 +1,130 @@
+---
+import type { GetStaticPaths } from "astro";
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import CloudflareMedia from "../../components/CloudflareMedia.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  cloudflareImageSrcSet,
+  cloudflareImageUrl,
+  defaultResponsiveImageWidth,
+} from "../../lib/cloudflare-media";
+import { mediaById } from "../../lib/media-manifest";
+import { toMetaDescription } from "../../lib/seo";
+import type { MediaManifestItem } from "../../types/media";
+
+interface ProjectNavigation {
+  slug: string;
+  title: string;
+}
+
+interface Props {
+  project: CollectionEntry<"projects">;
+  previousProject: ProjectNavigation;
+  nextProject: ProjectNavigation;
+}
+
+export const getStaticPaths = (async () => {
+  const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+  if (projects.length !== 21) throw new Error(`Expected 21 projects, received ${projects.length}`);
+  return projects.map((project, index) => ({
+    params: { slug: project.data.slug },
+    props: {
+      project,
+      previousProject: projects[(index - 1 + projects.length) % projects.length]!.data,
+      nextProject: projects[(index + 1) % projects.length]!.data,
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+const { project, previousProject, nextProject } = Astro.props;
+const media = project.data.mediaIds.map((id) => mediaById.get(id)).filter((item): item is MediaManifestItem => Boolean(item));
+if (media.length !== project.data.mediaIds.length) throw new Error(`Media manifest mismatch for ${project.data.slug}`);
+
+const [cover, ...details] = media;
+if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
+const description = toMetaDescription(
+  project.data.description[0]
+    || `${project.data.title}, a ${project.data.categoryLabel.toLowerCase()} project by Jasmin Xinjie Jiang.`,
+);
+const socialImage = cloudflareImageUrl(cover.webR2Key, 1200, { height: 630, fit: "cover" });
+const coverPreloadImage = cloudflareImageUrl(cover.webR2Key, defaultResponsiveImageWidth(cover, true));
+const coverSizes = "(max-width: 42rem) calc(100vw - 2rem), calc(100vw - 4rem)";
+const projectUrl = `https://jasminjiang.com/projects/${project.data.slug}/`;
+const projectStructuredData = {
+  "@type": "CreativeWork",
+  "@id": `${projectUrl}#project`,
+  url: projectUrl,
+  name: project.data.title,
+  description,
+  image: socialImage,
+  dateCreated: String(project.data.year),
+  genre: project.data.categoryLabel,
+  creator: { "@id": "https://jasminjiang.com/#person" },
+  ...(project.data.location ? { spatialCoverage: project.data.location } : {}),
+};
+---
+
+<BaseLayout
+  title={`${project.data.title} — Jasmin Xinjie Jiang`}
+  description={description}
+  bodyClass="project-page"
+  showHeader={false}
+  showFooter={false}
+  image={socialImage}
+  imageAlt={`${project.data.title} — project cover`}
+  type="article"
+  preloadImage={coverPreloadImage}
+  preloadImageSrcSet={cloudflareImageSrcSet(cover)}
+  preloadImageSizes={coverSizes}
+  structuredData={projectStructuredData}
+>
+  <article class="project-detail">
+    <nav class="project-detail__topbar" aria-label="Project navigation">
+      <a href={`/#${project.data.slug}`} class="project-detail__back">All projects</a>
+      <span>{String(project.data.order).padStart(2, "0")} / 21</span>
+      <a href="/about/">About</a>
+    </nav>
+
+    <header class="project-detail__hero">
+      <div class="project-detail__heading" transition:name={`project-title-${project.data.slug}`}>
+        <p class="eyebrow">{project.data.categoryLabel} · {project.data.year}</p>
+        <h1>{project.data.title}</h1>
+      </div>
+      <CloudflareMedia media={cover} eager sizes={coverSizes} />
+    </header>
+
+    <div class="project-detail__information">
+      <dl>
+        {project.data.location && <><dt>Location</dt><dd>{project.data.location}</dd></>}
+        <dt>Year</dt><dd>{project.data.year}</dd>
+        <dt>Type</dt><dd>{project.data.categoryLabel}</dd>
+      </dl>
+
+      <div class="project-detail__copy">
+        {
+          project.data.description.length
+            ? project.data.description.map((paragraph) => <p>{paragraph}</p>)
+            : <p>This photographic series is presented as a visual sequence.</p>
+        }
+      </div>
+    </div>
+
+    {details.length > 0 && (
+      <section class="project-detail__gallery" aria-label={`${project.data.title} media`}>
+        {details.map((item) => <CloudflareMedia media={item} />)}
+      </section>
+    )}
+
+    <nav class="project-detail__pager" aria-label="Adjacent projects">
+      <a href={`/projects/${previousProject.slug}/`}>
+        <span>Previous</span>
+        <strong>{previousProject.title}</strong>
+      </a>
+      <a href={`/projects/${nextProject.slug}/`}>
+        <span>Next</span>
+        <strong>{nextProject.title}</strong>
+      </a>
+    </nav>
+  </article>
+</BaseLayout>

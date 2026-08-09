@@ -1,0 +1,26 @@
+{
+  "slug": "voltlab-uiux",
+  "legacyId": "18",
+  "order": 10,
+  "title": "VoltLab",
+  "category": "ui-ux",
+  "categoryLabel": "UI/UX",
+  "year": 2025,
+  "location": "Munich, Germany",
+  "description": [
+    "VoltLab redefines the interaction logic of academic platforms by integrating traditional 2D functionalities into a highly intuitive, immersive 3D environment. The core of the design lies in utilizing a 3D interface as a storytelling tool for the \"Hochvolthaus\" architecture, allowing users to navigate the space freely while experiencing its volume, materiality, and structural narrative in real-time.",
+    "By bridging the gap between flat data and spatial experience, the platform transforms conventional 2D tasks such as spacereservations into spatially-mapped interactions. Instead of browsing text-based lists, users can interact directly with the 3D digital twin to book specific zones. This \"spatialization of function\" eliminates the abstraction of traditional UI, making complex logistical workflows more intuitive and visually engaging. VoltLab represents a shift towards a \"Digital Twin\" ecosystem, where architecture becomes an interactive asset for collaborative innovation."
+  ],
+  "coverMediaId": "voltlab-uiux--cover",
+  "mediaIds": [
+    "voltlab-uiux--cover",
+    "voltlab-uiux--01",
+    "voltlab-uiux--02",
+    "voltlab-uiux--03",
+    "voltlab-uiux--04",
+    "voltlab-uiux--05",
+    "voltlab-uiux--06",
+    "voltlab-uiux--07",
+    "voltlab-uiux--08"
+  ]
+}

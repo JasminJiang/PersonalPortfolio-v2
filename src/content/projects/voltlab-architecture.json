@@ -1,0 +1,26 @@
+{
+  "slug": "voltlab-architecture",
+  "legacyId": "03",
+  "order": 3,
+  "title": "Voltlab",
+  "category": "architecture",
+  "categoryLabel": "Architecture Design",
+  "year": 2025,
+  "location": "Munich, Germany",
+  "description": [
+    "This project transforms the historic Hochvolthaus at TUM, originally built for high-voltage engineering, into a vibrant multi-functional hub for campus life. The design philosophy centers on \"Preserving the shell, reimagining the core.\" While the massive rhythmic brick façade is meticulously preserved to maintain its cultural heritage, the interior is radically hollowed out to create a sun-drenched, five-story atrium. This vertical void serves as a new \"urban living room,\" bridging the gap between the building's technical past and its collaborative future.",
+    "The intervention is defined by a bold monochromatic blue circulation system. This industrial-inspired \"blue ribbon\" of stairs and bridges cuts through the timber and concrete structural grid, creating a theatrical experience of movement. By inserting open-plan studios, lecture halls, and transparent lab zones into the original volumetric framework, the project fosters interdisciplinary exchange. The result is a high-contrast architectural dialogue where history provides the grounded backdrop for a dynamic, interconnected academic community."
+  ],
+  "coverMediaId": "voltlab-architecture--cover",
+  "mediaIds": [
+    "voltlab-architecture--cover",
+    "voltlab-architecture--01",
+    "voltlab-architecture--02",
+    "voltlab-architecture--03",
+    "voltlab-architecture--04",
+    "voltlab-architecture--05",
+    "voltlab-architecture--06",
+    "voltlab-architecture--07",
+    "voltlab-architecture--08"
+  ]
+}

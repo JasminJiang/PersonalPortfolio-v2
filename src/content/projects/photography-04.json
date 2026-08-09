@@ -1,0 +1,18 @@
+{
+  "slug": "photography-04",
+  "legacyId": "P04",
+  "order": 14,
+  "title": "Untitled Photo 4",
+  "category": "photography",
+  "categoryLabel": "Photography",
+  "year": 2024,
+  "description": [],
+  "coverMediaId": "photography-04--cover",
+  "mediaIds": [
+    "photography-04--cover",
+    "photography-04--01",
+    "photography-04--02",
+    "photography-04--03",
+    "photography-04--04"
+  ]
+}
