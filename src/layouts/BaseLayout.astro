@@ -2,6 +2,15 @@
 import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { ClientRouter } from "astro:transitions";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_SOCIAL_IMAGE,
+  DEFAULT_TITLE,
+  SITE_NAME,
+  SITE_ORIGIN,
+  personStructuredData,
+  serializeStructuredData,
+} from "../lib/seo";
 import "../styles/global.css";
 
 interface Props {
@@ -10,21 +19,39 @@ interface Props {
   showHeader?: boolean;
   showFooter?: boolean;
   bodyClass?: string;
+  image?: string;
+  imageAlt?: string;
+  type?: "website" | "article" | "profile";
+  noindex?: boolean;
+  structuredData?: Record<string, unknown> | Array<Record<string, unknown>>;
   preloadImage?: string;
   preloadImageSrcSet?: string;
   preloadImageSizes?: string;
 }
 
 const {
-  title = "Jasmin Xinjie Jiang",
-  description = "Portfolio of Jasmin Xinjie Jiang, a multidisciplinary designer working across architecture, immersive media, UI/UX, and photography.",
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
   showHeader = true,
   showFooter = true,
   bodyClass = "",
+  image = DEFAULT_SOCIAL_IMAGE,
+  imageAlt = "Selected work by Jasmin Xinjie Jiang",
+  type = "website",
+  noindex = false,
+  structuredData,
   preloadImage,
   preloadImageSrcSet,
   preloadImageSizes,
 } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE_ORIGIN).toString();
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    personStructuredData,
+    ...(structuredData ? Array.isArray(structuredData) ? structuredData : [structuredData] : []),
+  ],
+};
 ---
 
 <!doctype html>
@@ -33,7 +60,12 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
     <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="dns-prefetch" href="//assets.jasminjiang.com" />
     <link rel="preconnect" href="https://assets.jasminjiang.com" crossorigin />
     {
@@ -48,7 +80,21 @@ const {
         />
       )
     }
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:alt" content={imageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+    <meta name="twitter:image:alt" content={imageAlt} />
     <title>{title}</title>
+    <script is:inline type="application/ld+json" set:html={serializeStructuredData(schema)} />
     <ClientRouter />
     <slot name="head" />
   </head>

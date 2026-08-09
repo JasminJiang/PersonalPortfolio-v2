@@ -10,11 +10,19 @@ import { mediaById } from "../lib/media-manifest";
 
 const portrait = mediaById.get("about--portrait");
 if (!portrait) throw new Error("About portrait is missing from the media manifest");
+const portraitSocialImage = cloudflareImageUrl(portrait.webR2Key, 1200, { height: 630, fit: "cover" });
 const portraitPreloadImage = cloudflareImageUrl(
   portrait.webR2Key,
   defaultResponsiveImageWidth(portrait, true),
 );
 const portraitSizes = "(max-width: 42rem) 100vw, 42vw";
+const aboutStructuredData = {
+  "@type": "ProfilePage",
+  "@id": "https://jasminjiang.com/about/#page",
+  url: "https://jasminjiang.com/about/",
+  name: "About — Jasmin Xinjie Jiang",
+  mainEntity: { "@id": "https://jasminjiang.com/#person" },
+};
 ---
 
 <BaseLayout
@@ -22,9 +30,13 @@ const portraitSizes = "(max-width: 42rem) 100vw, 42vw";
   description="About Jasmin Xinjie Jiang, a multidisciplinary designer working across physical architecture and digital interfaces."
   bodyClass="about-page"
   showFooter={false}
+  image={portraitSocialImage}
+  imageAlt="Portrait of Jasmin Xinjie Jiang"
+  type="profile"
   preloadImage={portraitPreloadImage}
   preloadImageSrcSet={cloudflareImageSrcSet(portrait)}
   preloadImageSizes={portraitSizes}
+  structuredData={aboutStructuredData}
 >
   <article class="about-layout">
     <div class="about-layout__portrait" transition:name="about-portrait">

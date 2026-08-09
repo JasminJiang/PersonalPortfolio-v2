@@ -10,6 +10,7 @@ import {
   defaultResponsiveImageWidth,
 } from "../../lib/cloudflare-media";
 import { mediaById } from "../../lib/media-manifest";
+import { toMetaDescription } from "../../lib/seo";
 import type { MediaManifestItem } from "../../types/media";
 
 interface ProjectNavigation {
@@ -42,19 +43,41 @@ if (media.length !== project.data.mediaIds.length) throw new Error(`Media manife
 
 const [cover, ...details] = media;
 if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
+const description = toMetaDescription(
+  project.data.description[0]
+    || `${project.data.title}, a ${project.data.categoryLabel.toLowerCase()} project by Jasmin Xinjie Jiang.`,
+);
+const socialImage = cloudflareImageUrl(cover.webR2Key, 1200, { height: 630, fit: "cover" });
 const coverPreloadImage = cloudflareImageUrl(cover.webR2Key, defaultResponsiveImageWidth(cover, true));
 const coverSizes = "(max-width: 42rem) calc(100vw - 2rem), calc(100vw - 4rem)";
+const projectUrl = `https://jasminjiang.com/projects/${project.data.slug}/`;
+const projectStructuredData = {
+  "@type": "CreativeWork",
+  "@id": `${projectUrl}#project`,
+  url: projectUrl,
+  name: project.data.title,
+  description,
+  image: socialImage,
+  dateCreated: String(project.data.year),
+  genre: project.data.categoryLabel,
+  creator: { "@id": "https://jasminjiang.com/#person" },
+  ...(project.data.location ? { spatialCoverage: project.data.location } : {}),
+};
 ---
 
 <BaseLayout
   title={`${project.data.title} — Jasmin Xinjie Jiang`}
-  description={project.data.description[0] || `${project.data.title}, a ${project.data.categoryLabel.toLowerCase()} project by Jasmin Xinjie Jiang.`}
+  description={description}
   bodyClass="project-page"
   showHeader={false}
   showFooter={false}
+  image={socialImage}
+  imageAlt={`${project.data.title} — project cover`}
+  type="article"
   preloadImage={coverPreloadImage}
   preloadImageSrcSet={cloudflareImageSrcSet(cover)}
   preloadImageSizes={coverSizes}
+  structuredData={projectStructuredData}
 >
   <article class="project-detail">
     <nav class="project-detail__topbar" aria-label="Project navigation">

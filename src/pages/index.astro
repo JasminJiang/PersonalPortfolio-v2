@@ -20,9 +20,16 @@ const carouselProjects = projects.map(({ data }) => {
   };
 });
 const homeCover = carouselProjects[0]?.coverSrc;
+const homeStructuredData = {
+  "@type": "WebSite",
+  "@id": "https://jasminjiang.com/#website",
+  name: "Jasmin Xinjie Jiang — Portfolio",
+  url: "https://jasminjiang.com",
+  author: { "@id": "https://jasminjiang.com/#person" },
+};
 ---
 
-<BaseLayout bodyClass="home-page" preloadImage={homeCover}>
+<BaseLayout bodyClass="home-page" preloadImage={homeCover} structuredData={homeStructuredData}>
   <CylindricalLoader />
   <ProjectCarousel projects={carouselProjects} client:idle={{ timeout: 600 }} />
   <section class="project-index" aria-labelledby="portfolio-title">
