@@ -422,6 +422,13 @@ main {
 .carousel-shell__canvas {
   position: absolute;
   inset: 0;
+  opacity: 1;
+  transition: opacity 280ms var(--ease-out-expo);
+}
+
+.carousel-shell[data-texture-state="loading"] .carousel-shell__canvas {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .carousel-shell__canvas canvas {
