@@ -255,7 +255,6 @@ export default function ProjectCarousel({ projects }: Props) {
       stepX: event.clientX,
       moved: false,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {

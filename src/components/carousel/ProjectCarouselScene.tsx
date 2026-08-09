@@ -29,6 +29,7 @@ function CarouselPanel({
   reducedMotion,
   onSelect,
   onActiveTextureReady,
+  onHoverChange,
 }: {
   index: number;
   slotCount: number;
@@ -39,6 +40,7 @@ function CarouselPanel({
   reducedMotion: boolean;
   onSelect: (index: number) => void;
   onActiveTextureReady: () => void;
+  onHoverChange: (hovered: boolean) => void;
 }) {
   const panel = useRef<Mesh>(null);
   const surface = useRef<MeshBasicMaterial>(null);
@@ -99,6 +101,8 @@ function CarouselPanel({
   useEffect(() => {
     invalidate();
   }, [active, invalidate, reducedMotion]);
+
+  useEffect(() => () => onHoverChange(false), [onHoverChange]);
 
   useEffect(() => {
     if (active && texture) onActiveTextureReady();
@@ -179,10 +183,12 @@ function CarouselPanel({
         onPointerOver={(event) => {
           event.stopPropagation();
           setHovered(true);
+          onHoverChange(true);
           invalidate();
         }}
         onPointerOut={() => {
           setHovered(false);
+          onHoverChange(false);
           invalidate();
         }}
       >
@@ -201,7 +207,7 @@ function CarouselPanel({
   );
 }
 
-function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect, onTextureReady }: Omit<Props, "onReady" | "onContextLost">) {
+function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect, onTextureReady, onHoverChange }: Omit<Props, "onReady" | "onContextLost"> & { onHoverChange: (hovered: boolean) => void }) {
   const ring = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
   const itemAngle = -((activeIndex / slotCount) * FULL_TURN);
@@ -243,6 +249,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
             reducedMotion={reducedMotion}
             onSelect={onSelect}
             onActiveTextureReady={onTextureReady}
+            onHoverChange={onHoverChange}
           />
         );
       })}
@@ -262,12 +269,14 @@ export default function ProjectCarouselScene({
   onContextLost,
 }: Props) {
   const canvasCamera = useMemo(() => ({ position: [0, 0, 5] as [number, number, number], fov: 36 }), []);
+  const [panelHovered, setPanelHovered] = useState(false);
 
   return (
     <Canvas
       camera={canvasCamera}
       dpr={[1, 1.5]}
       frameloop="demand"
+      style={{ cursor: panelHovered ? "pointer" : "default" }}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", onContextLost, { once: true });
@@ -283,6 +292,7 @@ export default function ProjectCarouselScene({
         reducedMotion={reducedMotion}
         onSelect={onSelect}
         onTextureReady={onTextureReady}
+        onHoverChange={setPanelHovered}
       />
     </Canvas>
   );

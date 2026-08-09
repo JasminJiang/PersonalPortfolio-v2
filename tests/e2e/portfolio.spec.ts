@@ -120,6 +120,12 @@ test("canvas click fallback opens any visible project", async ({ page, isMobile 
   await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
 });
 
+test("blank canvas keeps the default cursor", async ({ page }) => {
+  await page.goto("/");
+  const canvas = page.locator(".carousel-shell__canvas canvas");
+  await expect(canvas).toHaveCSS("cursor", "default");
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
