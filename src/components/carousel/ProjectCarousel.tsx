@@ -81,6 +81,7 @@ export default function ProjectCarousel({ projects }: Props) {
   const [renderState, setRenderState] = useState<"checking" | "loading" | "ready" | "fallback">("checking");
   const [sceneEnabled, setSceneEnabled] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
+  const [activeTextureReady, setActiveTextureReady] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<ProjectFilter>("all");
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
@@ -153,6 +154,7 @@ export default function ProjectCarousel({ projects }: Props) {
     const index = (requestedIndex + filteredProjects.length) % filteredProjects.length;
     const project = filteredProjects[index];
     if (!project) return;
+    if (sceneRequested.current) setActiveTextureReady(false);
     activeIndexRef.current = index;
     setActiveIndex(index);
     history.replaceState(history.state, "", `/#${project.slug}`);
@@ -198,6 +200,7 @@ export default function ProjectCarousel({ projects }: Props) {
     const firstProject = nextProjects[0];
     activeIndexRef.current = 0;
     setActiveIndex(0);
+    if (sceneRequested.current) setActiveTextureReady(false);
     setFilter(nextFilter);
     if (firstProject) history.replaceState(history.state, "", `/#${firstProject.slug}`);
     requestScene();
@@ -292,9 +295,11 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const useStaticFallback = useCallback(() => {
     setSceneReady(false);
+    setActiveTextureReady(false);
     setSceneEnabled(false);
   }, []);
   const markSceneReady = useCallback(() => setSceneReady(true), []);
+  const markActiveTextureReady = useCallback(() => setActiveTextureReady(true), []);
 
   if (!activeProject || renderState === "fallback") return null;
   const previewProjects = [-2, -1, 0, 1, 2].map((offset) => (
@@ -307,6 +312,7 @@ export default function ProjectCarousel({ projects }: Props) {
       className="carousel-shell"
       data-state={renderState}
       data-scene-state={sceneReady ? "ready" : sceneEnabled ? "loading" : "deferred"}
+      data-texture-state={activeTextureReady ? "ready" : "loading"}
       data-opening={openingIndex !== null ? "true" : "false"}
       aria-label="Interactive project carousel"
       aria-roledescription="carousel"
@@ -371,6 +377,7 @@ export default function ProjectCarousel({ projects }: Props) {
                 reducedMotion={reducedMotion}
                 onSelect={selectPanel}
                 onReady={markSceneReady}
+                onTextureReady={markActiveTextureReady}
                 onContextLost={useStaticFallback}
               />
             </Suspense>

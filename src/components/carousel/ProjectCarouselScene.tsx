@@ -15,6 +15,7 @@ interface Props {
   reducedMotion: boolean;
   onSelect: (index: number) => void;
   onReady: () => void;
+  onTextureReady: () => void;
   onContextLost: () => void;
 }
 
@@ -28,6 +29,7 @@ function CarouselPanel({
   coverSrc,
   reducedMotion,
   onSelect,
+  onActiveTextureReady,
 }: {
   project: CarouselProject;
   index: number;
@@ -38,6 +40,7 @@ function CarouselPanel({
   coverSrc?: string;
   reducedMotion: boolean;
   onSelect: (index: number) => void;
+  onActiveTextureReady: () => void;
 }) {
   const panel = useRef<Mesh>(null);
   const surface = useRef<MeshBasicMaterial>(null);
@@ -89,6 +92,10 @@ function CarouselPanel({
   useEffect(() => {
     invalidate();
   }, [active, invalidate, reducedMotion]);
+
+  useEffect(() => {
+    if (active && texture) onActiveTextureReady();
+  }, [active, onActiveTextureReady, texture]);
 
   useFrame((_, delta) => {
     if (!panel.current || !surface.current) return;
@@ -201,7 +208,7 @@ function CarouselPanel({
   );
 }
 
-function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect }: Omit<Props, "onReady" | "onContextLost">) {
+function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect, onTextureReady }: Omit<Props, "onReady" | "onContextLost">) {
   const ring = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
   const itemAngle = -((activeIndex / slotCount) * FULL_TURN);
@@ -243,6 +250,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
             coverSrc={wrappedDistance <= 1 ? project.coverSrc : wrappedDistance <= 2 ? project.previewSrc : undefined}
             reducedMotion={reducedMotion}
             onSelect={onSelect}
+            onActiveTextureReady={onTextureReady}
           />
         );
       })}
@@ -258,6 +266,7 @@ export default function ProjectCarouselScene({
   reducedMotion,
   onSelect,
   onReady,
+  onTextureReady,
   onContextLost,
 }: Props) {
   const canvasCamera = useMemo(() => ({ position: [0, 0, 5] as [number, number, number], fov: 36 }), []);
@@ -281,6 +290,7 @@ export default function ProjectCarouselScene({
         openingIndex={openingIndex}
         reducedMotion={reducedMotion}
         onSelect={onSelect}
+        onTextureReady={onTextureReady}
       />
     </Canvas>
   );

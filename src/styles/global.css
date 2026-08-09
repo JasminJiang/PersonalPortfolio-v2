@@ -440,7 +440,7 @@ main {
   transition: opacity 280ms var(--ease-out-expo);
 }
 
-.carousel-shell[data-scene-state="ready"] .carousel-shell__static {
+.carousel-shell[data-texture-state="ready"] .carousel-shell__static {
   opacity: 0;
 }
 
