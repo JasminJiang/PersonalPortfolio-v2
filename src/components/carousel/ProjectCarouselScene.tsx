@@ -244,14 +244,29 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
       const detail = (event as CustomEvent<CarouselWheelMotionDetail>).detail;
       if (!detail || !Number.isFinite(detail.delta)) return;
       const delta = MathUtils.clamp(detail.delta, -80, 80);
-      motionTarget.current += delta * CAROUSEL_WHEEL_ROTATION_FACTOR;
-      followingProgrammaticTarget.current = false;
+      const current = ring.current?.rotation.y ?? motionTarget.current;
+      const maximumTargetLead = (FULL_TURN / Math.max(slotCount, 1)) * 0.8;
+      const wheelRotation = delta * CAROUSEL_WHEEL_ROTATION_FACTOR;
+      if (followingProgrammaticTarget.current) {
+        const wheelOffset = MathUtils.clamp(
+          motionTarget.current - alignedTarget.current + wheelRotation,
+          -maximumTargetLead,
+          maximumTargetLead,
+        );
+        motionTarget.current = alignedTarget.current + wheelOffset;
+      } else {
+        motionTarget.current = MathUtils.clamp(
+          motionTarget.current + wheelRotation,
+          current - maximumTargetLead,
+          current + maximumTargetLead,
+        );
+      }
       invalidate();
     };
 
     window.addEventListener(CAROUSEL_WHEEL_MOTION_EVENT, handleWheelMotion);
     return () => window.removeEventListener(CAROUSEL_WHEEL_MOTION_EVENT, handleWheelMotion);
-  }, [invalidate, openingIndex, reducedMotion]);
+  }, [invalidate, openingIndex, reducedMotion, slotCount]);
 
   useFrame((_, delta) => {
     if (!ring.current) return;
@@ -267,6 +282,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
     if (followingProgrammaticTarget.current) {
       if (Math.abs(ring.current.rotation.y - nextTarget) <= 0.002) {
         followingProgrammaticTarget.current = false;
+        invalidate();
       }
     } else if (openingIndex === null && projects.length > 0) {
       const step = FULL_TURN / Math.max(slotCount, 1);
@@ -295,7 +311,6 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
       {projects.map((project, index) => {
         const directDistance = Math.abs(index - activeIndex);
         const wrappedDistance = Math.min(directDistance, projects.length - directDistance);
-        if (wrappedDistance > 2) return null;
         return (
           <CarouselPanel
             key={project.slug}
@@ -304,7 +319,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
             active={index === activeIndex}
             opening={index === openingIndex}
             dimmed={openingIndex !== null && index !== openingIndex}
-            coverSrc={wrappedDistance <= 1 ? project.coverSrc : wrappedDistance <= 2 ? project.previewSrc : undefined}
+            coverSrc={wrappedDistance <= 3 ? project.previewSrc : undefined}
             reducedMotion={reducedMotion}
             onSelect={onSelect}
             onActiveTextureReady={onTextureReady}

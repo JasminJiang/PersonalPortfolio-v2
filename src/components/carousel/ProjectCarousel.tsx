@@ -35,7 +35,6 @@ interface Props {
 }
 
 const DRAG_STEP_PX = 56;
-const WHEEL_FRAME_BUDGET_MS = 1000 / 60;
 const WHEEL_MAX_DELTA_PER_FRAME = 80;
 const REDUCED_MOTION_WHEEL_INTERVAL_MS = 180;
 const AUTOMATIC_SCENE_DELAY_MS = 0;
@@ -228,24 +227,7 @@ export default function ProjectCarousel({ projects }: Props) {
     const element = shell.current;
     if (!element || renderState === "checking" || renderState === "fallback") return;
 
-    let pendingDelta = 0;
-    let wheelFrame: number | undefined;
-    let lastFrameTime = performance.now() - WHEEL_FRAME_BUDGET_MS;
     let lastReducedMotionStep = 0;
-
-    const flushWheel = (time: number) => {
-      wheelFrame = undefined;
-      const elapsed = Math.max(0, time - lastFrameTime);
-      const frameLimit = WHEEL_MAX_DELTA_PER_FRAME * Math.min(1, elapsed / WHEEL_FRAME_BUDGET_MS);
-      const frameDelta = Math.max(-frameLimit, Math.min(frameLimit, pendingDelta));
-      pendingDelta = 0;
-      lastFrameTime = time;
-      if (Math.abs(frameDelta) < 0.01 || document.hidden) return;
-      window.dispatchEvent(new CustomEvent<CarouselWheelMotionDetail>(CAROUSEL_WHEEL_MOTION_EVENT, {
-        detail: { delta: frameDelta },
-      }));
-    };
-
     const handleWheel = (event: WheelEvent) => {
       if (openingIndex !== null) return;
       const delta = event.deltaY;
@@ -261,15 +243,15 @@ export default function ProjectCarousel({ projects }: Props) {
         return;
       }
 
-      pendingDelta += Math.max(-WHEEL_MAX_DELTA_PER_FRAME, Math.min(WHEEL_MAX_DELTA_PER_FRAME, delta));
-      if (wheelFrame === undefined) wheelFrame = window.requestAnimationFrame(flushWheel);
+      if (document.hidden) return;
+      const normalizedDelta = Math.max(-WHEEL_MAX_DELTA_PER_FRAME, Math.min(WHEEL_MAX_DELTA_PER_FRAME, delta));
+      window.dispatchEvent(new CustomEvent<CarouselWheelMotionDetail>(CAROUSEL_WHEEL_MOTION_EVENT, {
+        detail: { delta: normalizedDelta },
+      }));
     };
 
     element.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      element.removeEventListener("wheel", handleWheel);
-      if (wheelFrame !== undefined) window.cancelAnimationFrame(wheelFrame);
-    };
+    return () => element.removeEventListener("wheel", handleWheel);
   }, [moveBy, openingIndex, reducedMotion, renderState, requestScene]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {

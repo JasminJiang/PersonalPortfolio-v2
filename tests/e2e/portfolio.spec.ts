@@ -46,7 +46,7 @@ test("carousel supports buttons, keyboard, wheel, and route restoration", async 
   await expect(heading).toHaveText("Aeolian Resonance");
 });
 
-test("high-frequency wheel bursts are capped to one safe frame of motion", async ({ page, isMobile }) => {
+test("high-frequency wheel bursts cannot queue more than one project of motion", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
@@ -61,7 +61,7 @@ test("high-frequency wheel bursts are capped to one safe frame of motion", async
   });
 
   await page.waitForTimeout(500);
-  await expect(heading).toHaveText("Aeolian Resonance");
+  await expect(heading).toHaveText(/Aeolian Resonance|Waterborne Urbanism/);
 });
 
 test("pointer drag changes the active project", async ({ page, isMobile }) => {

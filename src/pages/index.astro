@@ -18,7 +18,7 @@ const carouselProjects = projects.map(({ data }) => {
     categoryLabel: data.categoryLabel,
     year: data.year,
     coverSrc: cloudflareImageUrl(cover.webR2Key, 1280),
-    previewSrc: cloudflareImageUrl(cover.webR2Key, 480),
+    previewSrc: cloudflareImageUrl(cover.webR2Key, 768),
   };
 });
 const homeCover = carouselProjects[0]?.coverSrc;
