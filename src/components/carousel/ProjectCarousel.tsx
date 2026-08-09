@@ -2,6 +2,7 @@ import {
   Component,
   type ErrorInfo,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   lazy,
@@ -184,8 +185,24 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const selectPanel = useCallback((index: number) => {
     if (performance.now() < suppressPanelSelectUntil.current) return;
+    suppressPanelSelectUntil.current = performance.now() + 100;
     beginOpen(index);
   }, [beginOpen]);
+
+  const handleCanvasClick = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    if (openingIndex !== null || performance.now() < suppressPanelSelectUntil.current) return;
+    if ((event.target as HTMLElement).closest("a, button")) return;
+    if (!(event.target as HTMLElement).closest(".carousel-shell__canvas")) return;
+    const bounds = shell.current?.getBoundingClientRect();
+    if (!bounds || filteredProjects.length === 0) return;
+    const relativeY = (event.clientY - bounds.top) / bounds.height;
+    if (relativeY < 0.38 || relativeY > 0.72) return;
+    const relativeX = Math.min(0.999, Math.max(0, (event.clientX - bounds.left) / bounds.width));
+    const visibleSlot = Math.floor(relativeX * 5);
+    const offset = [-2, -1, 0, 1, 2][visibleSlot] ?? 0;
+    const index = (activeIndexRef.current + offset + filteredProjects.length) % filteredProjects.length;
+    beginOpen(index);
+  }, [beginOpen, filteredProjects.length, openingIndex]);
 
   const changeFilter = useCallback((nextFilter: ProjectFilter) => {
     if (nextFilter === filter) return;
@@ -322,6 +339,7 @@ export default function ProjectCarousel({ projects }: Props) {
       onPointerMove={handlePointerMove}
       onPointerUp={endPointerGesture}
       onPointerCancel={endPointerGesture}
+      onClick={handleCanvasClick}
     >
       <header className="carousel-shell__header">
         <nav className="carousel-shell__filters" aria-label="Project categories">
@@ -362,8 +380,9 @@ export default function ProjectCarousel({ projects }: Props) {
             <img
               src={previewIndex === 2 || Math.abs(previewIndex - 2) === 1 ? project.coverSrc : project.previewSrc}
               alt=""
-              loading={previewIndex === 2 ? "eager" : "lazy"}
+              loading="eager"
               fetchPriority={previewIndex === 2 ? "high" : "low"}
+              crossOrigin="anonymous"
               decoding="async"
               draggable={false}
             />

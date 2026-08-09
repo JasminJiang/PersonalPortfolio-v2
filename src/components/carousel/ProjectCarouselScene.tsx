@@ -60,9 +60,14 @@ function CarouselPanel({
     let ownedTexture: Texture | undefined;
     const loader = new TextureLoader();
     loader.setCrossOrigin("anonymous");
-    loader.load(
-      coverSrc,
-      (nextTexture) => {
+    const retryUrl = new URL(coverSrc);
+    retryUrl.searchParams.set("texture-retry", "1");
+    const sources = [coverSrc, retryUrl.toString()];
+
+    const loadTexture = (sourceIndex: number) => {
+      const source = sources[sourceIndex];
+      if (!source) return;
+      loader.load(source, (nextTexture) => {
         ownedTexture = nextTexture;
         nextTexture.colorSpace = SRGBColorSpace;
         nextTexture.minFilter = LinearFilter;
@@ -73,12 +78,17 @@ function CarouselPanel({
         }
         setLoadedTexture({ source: coverSrc, texture: nextTexture });
         invalidate();
-      },
-      undefined,
-      () => {
-        if (!cancelled) invalidate();
-      },
-    );
+      }, undefined, () => {
+        if (cancelled) return;
+        if (sourceIndex + 1 < sources.length) {
+          loadTexture(sourceIndex + 1);
+          return;
+        }
+        invalidate();
+      });
+    };
+
+    loadTexture(0);
 
     return () => {
       cancelled = true;

@@ -108,6 +108,18 @@ test("every visible static project opens directly", async ({ page }) => {
   await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
 });
 
+test("canvas click fallback opens any visible project", async ({ page, isMobile }) => {
+  test.skip(isMobile, "The mobile carousel exposes the centered panel; side-link coverage is tested separately");
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel.locator("canvas")).toHaveCount(1);
+  const box = await carousel.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  await page.mouse.click(box.x + box.width * 0.7, box.y + box.height * 0.55);
+  await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
