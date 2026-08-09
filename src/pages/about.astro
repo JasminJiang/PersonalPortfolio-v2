@@ -33,6 +33,7 @@ const aboutStructuredData = {
   image={portraitSocialImage}
   imageAlt="Portrait of Jasmin Xinjie Jiang"
   type="profile"
+  showHeader={false}
   preloadImage={portraitPreloadImage}
   preloadImageSrcSet={cloudflareImageSrcSet(portrait)}
   preloadImageSizes={portraitSizes}
@@ -44,31 +45,37 @@ const aboutStructuredData = {
     </div>
 
     <div class="about-layout__content">
-      <p class="section-label">About</p>
-      <h1>Physical architecture.<br />Digital interfaces.</h1>
+      <nav class="about-layout__topbar" aria-label="About navigation">
+        <a href="/">All projects</a>
+      </nav>
 
-      <div class="about-layout__copy">
-        <p>
-          I’m Xinjie, a multidisciplinary designer operating at the intersection of physical architecture and digital interfaces. My practice is defined by two parallel tracks: crafting precision-driven UI/UX for screens and building immersive spatial experiences through AR/VR.
-        </p>
-        <p>
-          By leveraging a technical background in coding and AI, I bridge the gap between architectural form and interactive logic. Whether it is an intuitive mobile interface or a complex XR environment, I ensure every pixel and every space is grounded in functional feasibility.
-        </p>
-        <p>
-          With an aesthetic intuition rooted in photography, I transform complex systems into seamless visual narratives across both two-dimensional and spatial dimensions.
-        </p>
-      </div>
-
-      <section class="about-contact" aria-labelledby="contact-heading">
-        <p class="section-label" id="contact-heading">Contact</p>
-        <div class="about-contact__links">
-          <a href="mailto:ahorajiang@gmail.com">Email</a>
-          <a href="https://www.linkedin.com/in/xinjie-jiang-71811b369" target="_blank" rel="noreferrer">LinkedIn</a>
-          <a href="https://www.instagram.com/jjjasminx1236/" target="_blank" rel="noreferrer">Instagram</a>
+      <div class="about-layout__main">
+        <p class="section-label">About</p>
+        <div class="about-layout__copy">
+          <p>
+            I’m Xinjie, a multidisciplinary designer operating at the intersection of physical architecture and digital interfaces. My practice is defined by two parallel tracks: crafting precision-driven UI/UX for screens and building immersive spatial experiences through AR/VR.
+          </p>
+          <p>
+            By leveraging a technical background in coding and AI, I bridge the gap between architectural form and interactive logic. Whether it is an intuitive mobile interface or a complex XR environment, I ensure every pixel and every space is grounded in functional feasibility.
+          </p>
+          <p>
+            With an aesthetic intuition rooted in photography, I transform complex systems into seamless visual narratives across both two-dimensional and spatial dimensions.
+          </p>
         </div>
-      </section>
 
-      <p class="about-layout__signature">Jasmin Xinjie Jiang</p>
+        <section class="about-contact" aria-labelledby="contact-heading">
+          <p class="section-label" id="contact-heading">Contact</p>
+          <div class="about-contact__links">
+            <span>
+              <a href="https://www.linkedin.com/in/xinjie-jiang-71811b369" target="_blank" rel="noreferrer">LinkedIn</a>
+              <a href="https://www.instagram.com/jjjasminx1236/" target="_blank" rel="noreferrer">Instagram</a>
+            </span>
+            <a href="mailto:ahorajiang@gmail.com">Email</a>
+          </div>
+        </section>
+
+        <p class="about-layout__signature">Jasmin Xinjie Jiang</p>
+      </div>
     </div>
   </article>
 </BaseLayout>

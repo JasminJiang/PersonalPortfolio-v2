@@ -14,12 +14,14 @@ const carouselProjects = projects.map(({ data }) => {
     slug: data.slug,
     order: data.order,
     title: data.title,
+    category: data.category,
     categoryLabel: data.categoryLabel,
     year: data.year,
     coverSrc: cloudflareImageUrl(cover.webR2Key, 1280),
+    previewSrc: cloudflareImageUrl(cover.webR2Key, 768),
+    compactSrc: cloudflareImageUrl(cover.webR2Key, 480),
   };
 });
-const homeCover = carouselProjects[0]?.coverSrc;
 const homeStructuredData = {
   "@type": "WebSite",
   "@id": "https://jasminjiang.com/#website",
@@ -29,7 +31,12 @@ const homeStructuredData = {
 };
 ---
 
-<BaseLayout bodyClass="home-page" preloadImage={homeCover} structuredData={homeStructuredData}>
+<BaseLayout
+  bodyClass="home-page"
+  showHeader={false}
+  showFooter={false}
+  structuredData={homeStructuredData}
+>
   <CylindricalLoader />
   <ProjectCarousel projects={carouselProjects} client:idle={{ timeout: 600 }} />
   <section class="project-index" aria-labelledby="portfolio-title">

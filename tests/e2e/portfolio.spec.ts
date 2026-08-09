@@ -32,16 +32,110 @@ test("carousel supports buttons, keyboard, wheel, and route restoration", async 
   if (!isMobile) {
     await carousel.hover();
     await page.mouse.wheel(0, 80);
+    await expect(heading).toHaveText("Voltlab");
+    await page.mouse.wheel(0, 80);
     await expect(heading).toHaveText("Cyan Pavilion");
   }
 
   await carousel.press("Home");
-  await carousel.getByRole("link", { name: "View project" }).click();
+  await carousel.getByRole("link", { name: "View project" }).press("Enter");
   await expect(page).toHaveURL(/\/projects\/aeolian-resonance\/$/);
   await page.getByRole("link", { name: "All projects" }).click();
   await expect(page).toHaveURL(/\/#aeolian-resonance$/);
   await expect(carousel).toHaveAttribute("data-state", "ready");
   await expect(heading).toHaveText("Aeolian Resonance");
+});
+
+test("high-frequency wheel bursts cannot queue more than one project of motion", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-state", "ready");
+  const heading = carousel.getByRole("heading", { level: 1 });
+  await expect(heading).toHaveText("Aeolian Resonance");
+
+  await carousel.evaluate((element) => {
+    for (let index = 0; index < 12; index += 1) {
+      element.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 80 }));
+    }
+  });
+
+  await page.waitForTimeout(500);
+  await expect(heading).toHaveText(/Aeolian Resonance|Waterborne Urbanism/);
+});
+
+test("opposite wheel input cancels motion queued in the old direction", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  const heading = carousel.getByRole("heading", { level: 1 });
+  await expect(carousel).toHaveAttribute("data-scene-state", "ready");
+  await expect(heading).toHaveText("Aeolian Resonance");
+
+  await carousel.evaluate((element) => {
+    for (let index = 0; index < 10; index += 1) {
+      element.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 80 }));
+    }
+  });
+  await page.waitForTimeout(32);
+  await carousel.evaluate((element) => {
+    element.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -40 }));
+  });
+
+  await page.waitForTimeout(700);
+  await expect(heading).toHaveText("Aeolian Resonance");
+});
+
+test("WebGL carousel keeps texture residency bounded while moving", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  test.setTimeout(60_000);
+  const transparentPixel = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+X3p0WQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  await page.route("https://assets.jasminjiang.com/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "image/png",
+    body: transparentPixel,
+  }));
+  const carouselTextureRequests: string[] = [];
+  let sceneReady = false;
+  page.on("request", (request) => {
+    if (
+      sceneReady
+      && request.resourceType() === "image"
+      && (request.url().includes("width=1280") || request.url().includes("width=768"))
+    ) {
+      carouselTextureRequests.push(request.url());
+    }
+  });
+
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-scene-state", "ready");
+  await expect(carousel).toHaveAttribute("data-texture-state", "ready", { timeout: 30_000 });
+  await page.waitForLoadState("networkidle");
+  const initialTextureUrls = await page.evaluate(() => [...new Set(
+    performance.getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((name) => name.includes("width=768")),
+  )]);
+  expect(initialTextureUrls.length).toBeGreaterThanOrEqual(5);
+  expect(initialTextureUrls.length).toBeLessThanOrEqual(7);
+  sceneReady = true;
+  await carousel.hover();
+  for (let index = 0; index < 8; index += 1) {
+    await page.mouse.wheel(0, 40);
+  }
+  await page.waitForTimeout(800);
+
+  expect([...new Set(carouselTextureRequests)].length).toBeLessThanOrEqual(3);
+  const totalTextureUrls = await page.evaluate(() => [...new Set(
+    performance.getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((name) => name.includes("width=768")),
+  )].length);
+  expect(totalTextureUrls).toBeLessThanOrEqual(10);
 });
 
 test("pointer drag changes the active project", async ({ page, isMobile }) => {
@@ -92,6 +186,118 @@ test("reduced motion keeps automatic WebGL enhancement deferred", async ({ page 
   await expect(carousel).toHaveAttribute("data-scene-state", "deferred");
 });
 
+test("every visible static project opens directly", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  const visibleProject = carousel.getByRole("link", { name: "Open Waterborne Urbanism" });
+  const box = await visibleProject.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  if (!box || !viewport) return;
+  const visibleLeft = Math.max(0, box.x);
+  const visibleRight = Math.min(viewport.width, box.x + box.width);
+  await page.mouse.click((visibleLeft + visibleRight) / 2, box.y + box.height / 2);
+  await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
+});
+
+test("canvas click fallback opens any visible project", async ({ page, isMobile }) => {
+  test.skip(isMobile, "The mobile carousel exposes the centered panel; side-link coverage is tested separately");
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel.locator("canvas")).toHaveCount(1);
+  const box = await carousel.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  await carousel.locator(".carousel-shell__canvas").dispatchEvent("click", {
+    clientX: box.x + box.width * 0.7,
+    clientY: box.y + box.height * 0.55,
+  });
+  await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
+});
+
+test("blank canvas keeps the default cursor", async ({ page }) => {
+  await page.goto("/");
+  const canvas = page.locator(".carousel-shell__canvas canvas");
+  await expect(canvas).toHaveCSS("cursor", "default");
+});
+
+test("home interface type remains readable in a split-screen viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 900 });
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-state", "ready");
+
+  const sizes = await page.evaluate(() => {
+    const readSize = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
+      return Number.parseFloat(getComputedStyle(element).fontSize);
+    };
+
+    return {
+      filter: readSize(".carousel-shell__filters button"),
+      count: readSize(".carousel-shell__filters button span:last-child"),
+      about: readSize(".carousel-shell__about"),
+      footer: readSize(".carousel-shell__footer"),
+    };
+  });
+
+  expect(sizes.filter).toBeGreaterThanOrEqual(13);
+  expect(sizes.count).toBeGreaterThanOrEqual(12);
+  expect(sizes.about).toBeGreaterThanOrEqual(13);
+  expect(sizes.footer).toBeGreaterThanOrEqual(13);
+  await expectNoHorizontalOverflow(page);
+});
+
+test("project detail typography remains readable from full to split-screen widths", async ({ page }) => {
+  await page.goto("/projects/voltlab-architecture/");
+
+  for (const viewport of [
+    { width: 1440, height: 900, columns: 2 },
+    { width: 800, height: 900, columns: 1 },
+    { width: 390, height: 844, columns: 1 },
+  ]) {
+    await page.setViewportSize(viewport);
+
+    const typography = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!(element instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
+        const style = getComputedStyle(element);
+        return {
+          fontSize: Number.parseFloat(style.fontSize),
+          lineHeight: Number.parseFloat(style.lineHeight),
+        };
+      };
+      const information = document.querySelector(".project-detail__information");
+      if (!(information instanceof HTMLElement)) throw new Error("Missing project information");
+
+      return {
+        body: read(".project-detail__copy p"),
+        heading: read(".project-detail__information h2"),
+        detail: read(".project-detail__information dd"),
+        metadata: read(".project-detail__metadata"),
+        pagerLabel: read(".project-detail__pager span"),
+        pagerTitle: read(".project-detail__pager strong"),
+        columns: getComputedStyle(information).gridTemplateColumns.split(" ").length,
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+
+    expect(typography.body.fontSize).toBeGreaterThanOrEqual(16);
+    expect(typography.body.lineHeight).toBeGreaterThanOrEqual(25);
+    expect(typography.heading.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.detail.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.metadata.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.pagerLabel.fontSize).toBeGreaterThanOrEqual(13);
+    expect(typography.pagerTitle.fontSize).toBeGreaterThanOrEqual(24);
+    expect(typography.columns).toBe(viewport.columns);
+    expect(typography.overflow).toBeLessThanOrEqual(1);
+  }
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
@@ -100,7 +306,7 @@ test("route transitions announce the project and unmount the WebGL canvas", asyn
   await expect(carousel).toHaveAttribute("data-scene-state", "ready");
   await expect(carousel.locator("canvas")).toHaveCount(1);
 
-  await carousel.getByRole("link", { name: "View project" }).click();
+  await carousel.getByRole("link", { name: "View project" }).press("Enter");
   await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
   await expect(page.locator("canvas")).toHaveCount(0);
   const announcer = page.locator(".astro-route-announcer");
