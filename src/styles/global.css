@@ -333,6 +333,15 @@ main {
   pointer-events: auto;
 }
 
+.carousel-shell:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+
+.carousel-shell[data-dragging="true"] .carousel-shell__canvas canvas {
+  cursor: grabbing;
+}
+
 .carousel-shell__canvas {
   position: absolute;
   inset: 0;
@@ -380,10 +389,42 @@ main {
   pointer-events: auto;
 }
 
+.carousel-shell__controls {
+  position: absolute;
+  right: var(--page-gutter);
+  bottom: calc(var(--footer-height) + 2rem);
+  z-index: 3;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.carousel-shell__controls button {
+  display: inline-flex;
+  min-width: 6.5rem;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-line);
+  background: rgb(255 255 255 / 82%);
+  color: var(--color-ink);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.carousel-shell__controls button:hover,
+.carousel-shell__controls button:focus-visible {
+  border-color: var(--color-ink);
+}
+
 .carousel-shell__hint {
   position: absolute;
   right: var(--page-gutter);
-  bottom: calc(var(--footer-height) + 2.5rem);
+  bottom: calc(var(--footer-height) + 5.5rem);
   z-index: 2;
   margin: 0;
   color: var(--color-muted);
@@ -394,6 +435,17 @@ main {
 
 html[data-carousel-state="ready"] .project-index {
   display: none;
+}
+
+@media (max-width: 56rem) {
+  .carousel-shell__controls {
+    top: calc(var(--header-height) + 0.5rem);
+    bottom: auto;
+  }
+
+  .carousel-shell__hint {
+    display: none;
+  }
 }
 
 .project-index {
@@ -809,6 +861,26 @@ html[data-carousel-state="ready"] .project-index {
 
   .carousel-shell__hint {
     display: none;
+  }
+
+  .carousel-shell__controls {
+    right: var(--page-gutter);
+  }
+
+  .carousel-shell__controls button {
+    min-width: 2.75rem;
+  }
+
+  .carousel-shell__controls button span:not([aria-hidden="true"]) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .project-index__intro {
