@@ -15,12 +15,11 @@ interface Props {
   reducedMotion: boolean;
   onSelect: (index: number) => void;
   onReady: () => void;
-  onTextureReady: (coverSrc: string) => void;
+  onTextureReady: () => void;
   onContextLost: () => void;
 }
 
 function CarouselPanel({
-  project,
   index,
   slotCount,
   active,
@@ -31,7 +30,6 @@ function CarouselPanel({
   onSelect,
   onActiveTextureReady,
 }: {
-  project: CarouselProject;
   index: number;
   slotCount: number;
   active: boolean;
@@ -40,7 +38,7 @@ function CarouselPanel({
   coverSrc?: string;
   reducedMotion: boolean;
   onSelect: (index: number) => void;
-  onActiveTextureReady: (coverSrc: string) => void;
+  onActiveTextureReady: () => void;
 }) {
   const panel = useRef<Mesh>(null);
   const surface = useRef<MeshBasicMaterial>(null);
@@ -53,7 +51,6 @@ function CarouselPanel({
   const angle = -((index / slotCount) * FULL_TURN);
   const x = Math.sin(angle) * CAROUSEL_RADIUS;
   const z = Math.cos(angle) * CAROUSEL_RADIUS;
-  const shade = 0.925 + ((project.order * 7) % 6) * 0.009;
 
   useEffect(() => {
     invalidate();
@@ -94,8 +91,8 @@ function CarouselPanel({
   }, [active, invalidate, reducedMotion]);
 
   useEffect(() => {
-    if (active && texture && coverSrc) onActiveTextureReady(coverSrc);
-  }, [active, coverSrc, onActiveTextureReady, texture]);
+    if (active && texture) onActiveTextureReady();
+  }, [active, onActiveTextureReady, texture]);
 
   useFrame((_, delta) => {
     if (!panel.current || !surface.current) return;
@@ -133,6 +130,8 @@ function CarouselPanel({
     event.stopPropagation();
     onSelect(index);
   };
+
+  if (!texture) return null;
 
   return (
     <group position={[x, 0, z]} rotation={[0, angle + Math.PI, 0]}>
@@ -180,29 +179,13 @@ function CarouselPanel({
         <planeGeometry args={[8, 4.5, 24, 1]} />
         <meshBasicMaterial
           ref={surface}
-          color={texture ? "#ffffff" : [shade, shade, shade - 0.018]}
+          color="#ffffff"
           map={texture}
           transparent
           depthWrite={false}
           side={DoubleSide}
         />
 
-        {!texture && (
-          <>
-            <mesh position={[-2.84, 1.6, 0.012]}>
-              <planeGeometry args={[1.82, 0.08]} />
-              <meshBasicMaterial color="#10100f" transparent opacity={0.58} />
-            </mesh>
-            <mesh position={[-2.55, -1.62, 0.012]}>
-              <planeGeometry args={[2.4, 0.045]} />
-              <meshBasicMaterial color="#10100f" transparent opacity={0.22} />
-            </mesh>
-            <mesh position={[2.95, -1.62, 0.012]}>
-              <planeGeometry args={[1.25, 0.045]} />
-              <meshBasicMaterial color="#10100f" transparent opacity={0.22} />
-            </mesh>
-          </>
-        )}
       </mesh>
     </group>
   );
@@ -241,7 +224,6 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
         return (
           <CarouselPanel
             key={project.slug}
-            project={project}
             index={index}
             slotCount={slotCount}
             active={index === activeIndex}

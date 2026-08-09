@@ -30,7 +30,7 @@ interface Props {
 }
 
 const DRAG_STEP_PX = 56;
-const AUTOMATIC_SCENE_DELAY_MS = 12_000;
+const AUTOMATIC_SCENE_DELAY_MS = 0;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
 const FILTERS = [
   { id: "all", label: "All projects" },
@@ -81,7 +81,7 @@ export default function ProjectCarousel({ projects }: Props) {
   const [renderState, setRenderState] = useState<"checking" | "loading" | "ready" | "fallback">("checking");
   const [sceneEnabled, setSceneEnabled] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const [readyCoverSrc, setReadyCoverSrc] = useState<string | null>(null);
+  const [sceneHasTexture, setSceneHasTexture] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<ProjectFilter>("all");
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
@@ -102,7 +102,6 @@ export default function ProjectCarousel({ projects }: Props) {
     [filter, projects],
   );
   const activeProject = filteredProjects[activeIndex] ?? filteredProjects[0] ?? projects[0];
-  const activeTextureReady = readyCoverSrc === activeProject?.coverSrc;
   const previousProject = filteredProjects[(activeIndex - 1 + filteredProjects.length) % filteredProjects.length];
   const nextProject = filteredProjects[(activeIndex + 1) % filteredProjects.length];
 
@@ -155,7 +154,6 @@ export default function ProjectCarousel({ projects }: Props) {
     const index = (requestedIndex + filteredProjects.length) % filteredProjects.length;
     const project = filteredProjects[index];
     if (!project) return;
-    if (sceneRequested.current) setReadyCoverSrc(null);
     activeIndexRef.current = index;
     setActiveIndex(index);
     history.replaceState(history.state, "", `/#${project.slug}`);
@@ -186,12 +184,8 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const selectPanel = useCallback((index: number) => {
     if (performance.now() < suppressPanelSelectUntil.current) return;
-    if (index === activeIndexRef.current) {
-      beginOpen(index);
-      return;
-    }
-    activateProject(index);
-  }, [activateProject, beginOpen]);
+    beginOpen(index);
+  }, [beginOpen]);
 
   const changeFilter = useCallback((nextFilter: ProjectFilter) => {
     if (nextFilter === filter) return;
@@ -201,7 +195,6 @@ export default function ProjectCarousel({ projects }: Props) {
     const firstProject = nextProjects[0];
     activeIndexRef.current = 0;
     setActiveIndex(0);
-    if (sceneRequested.current) setReadyCoverSrc(null);
     setFilter(nextFilter);
     if (firstProject) history.replaceState(history.state, "", `/#${firstProject.slug}`);
     requestScene();
@@ -296,16 +289,21 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const useStaticFallback = useCallback(() => {
     setSceneReady(false);
-    setReadyCoverSrc(null);
+    setSceneHasTexture(false);
     setSceneEnabled(false);
   }, []);
   const markSceneReady = useCallback(() => setSceneReady(true), []);
-  const markActiveTextureReady = useCallback((coverSrc: string) => setReadyCoverSrc(coverSrc), []);
+  const markActiveTextureReady = useCallback(() => setSceneHasTexture(true), []);
 
   if (!activeProject || renderState === "fallback") return null;
-  const previewProjects = [-2, -1, 0, 1, 2].map((offset) => (
-    filteredProjects[(activeIndex + offset + filteredProjects.length) % filteredProjects.length] ?? activeProject
-  ));
+  const previewProjects = [-2, -1, 0, 1, 2].map((offset, previewIndex) => {
+    const index = (activeIndex + offset + filteredProjects.length) % filteredProjects.length;
+    return {
+      index,
+      position: ["previous-far", "previous", "active", "next", "next-far"][previewIndex],
+      project: filteredProjects[index] ?? activeProject,
+    };
+  });
 
   return (
     <section
@@ -313,7 +311,7 @@ export default function ProjectCarousel({ projects }: Props) {
       className="carousel-shell"
       data-state={renderState}
       data-scene-state={sceneReady ? "ready" : sceneEnabled ? "loading" : "deferred"}
-      data-texture-state={activeTextureReady ? "ready" : "loading"}
+      data-texture-state={sceneHasTexture ? "ready" : "loading"}
       data-opening={openingIndex !== null ? "true" : "false"}
       aria-label="Interactive project carousel"
       aria-roledescription="carousel"
@@ -348,11 +346,18 @@ export default function ProjectCarousel({ projects }: Props) {
         <a className="carousel-shell__about" href="/about/">About</a>
       </header>
 
-      <div className="carousel-shell__static" aria-hidden="true">
-        {previewProjects.map((project, previewIndex) => (
-          <figure
-            className={`carousel-shell__static-panel carousel-shell__static-panel--${["previous-far", "previous", "active", "next", "next-far"][previewIndex]}`}
+      <nav className="carousel-shell__static" aria-label="Visible projects">
+        {previewProjects.map(({ project, index, position }, previewIndex) => (
+          <a
+            className={`carousel-shell__static-panel carousel-shell__static-panel--${position}`}
+            href={`/projects/${project.slug}/`}
+            aria-label={`Open ${project.title}`}
             key={`${project.slug}-${previewIndex}`}
+            onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              beginOpen(index);
+            }}
           >
             <img
               src={previewIndex === 2 || Math.abs(previewIndex - 2) === 1 ? project.coverSrc : project.previewSrc}
@@ -362,9 +367,9 @@ export default function ProjectCarousel({ projects }: Props) {
               decoding="async"
               draggable={false}
             />
-          </figure>
+          </a>
         ))}
-      </div>
+      </nav>
 
       <div className="carousel-shell__canvas" aria-hidden="true">
         {sceneEnabled && (

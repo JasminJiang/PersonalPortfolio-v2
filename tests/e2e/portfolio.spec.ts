@@ -36,7 +36,7 @@ test("carousel supports buttons, keyboard, wheel, and route restoration", async 
   }
 
   await carousel.press("Home");
-  await carousel.getByRole("link", { name: "View project" }).click();
+  await carousel.getByRole("link", { name: "View project" }).press("Enter");
   await expect(page).toHaveURL(/\/projects\/aeolian-resonance\/$/);
   await page.getByRole("link", { name: "All projects" }).click();
   await expect(page).toHaveURL(/\/#aeolian-resonance$/);
@@ -92,6 +92,22 @@ test("reduced motion keeps automatic WebGL enhancement deferred", async ({ page 
   await expect(carousel).toHaveAttribute("data-scene-state", "deferred");
 });
 
+test("every visible static project opens directly", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  const visibleProject = carousel.getByRole("link", { name: "Open Waterborne Urbanism" });
+  const box = await visibleProject.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  if (!box || !viewport) return;
+  const visibleLeft = Math.max(0, box.x);
+  const visibleRight = Math.min(viewport.width, box.x + box.width);
+  await page.mouse.click((visibleLeft + visibleRight) / 2, box.y + box.height / 2);
+  await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
@@ -100,7 +116,7 @@ test("route transitions announce the project and unmount the WebGL canvas", asyn
   await expect(carousel).toHaveAttribute("data-scene-state", "ready");
   await expect(carousel.locator("canvas")).toHaveCount(1);
 
-  await carousel.getByRole("link", { name: "View project" }).click();
+  await carousel.getByRole("link", { name: "View project" }).press("Enter");
   await expect(page).toHaveURL(/\/projects\/waterborne-urbanism\/$/);
   await expect(page.locator("canvas")).toHaveCount(0);
   const announcer = page.locator(".astro-route-announcer");
