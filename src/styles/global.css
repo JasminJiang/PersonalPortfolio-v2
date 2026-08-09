@@ -1096,6 +1096,226 @@ html[data-carousel-state="ready"] .project-index {
   }
 }
 
+/* Project routes preserve the original cover-first overlay composition. */
+.project-page {
+  background: #fff;
+  color: #000;
+  font-size: 11px;
+}
+
+.project-page .project-detail {
+  min-height: 100svh;
+  padding: 0;
+}
+
+.project-page .project-detail__hero {
+  position: relative;
+  display: block;
+  min-height: 100svh;
+  padding: 0 0 4.5rem;
+}
+
+.project-detail__cover {
+  width: 100%;
+  height: calc(100svh - 4.5rem);
+  overflow: hidden;
+  background: #eee;
+}
+
+.project-detail__cover .media-frame,
+.project-detail__cover .media-frame__asset {
+  width: 100%;
+  height: 100%;
+}
+
+.project-detail__cover .media-frame {
+  aspect-ratio: auto;
+}
+
+.project-detail__cover .media-frame__asset {
+  object-fit: cover;
+}
+
+.project-detail__metadata {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 70;
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 0 2.5rem;
+  background: #fff;
+  font-size: clamp(9px, 0.75vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-detail__metadata > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1rem;
+}
+
+.project-detail__metadata i {
+  color: rgb(0 0 0 / 22%);
+  font-style: normal;
+}
+
+.project-detail__metadata span {
+  color: #707070;
+}
+
+.project-detail__metadata strong {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-detail__metadata a {
+  flex: 0 0 auto;
+  transition: opacity 180ms ease;
+}
+
+.project-detail__metadata a:hover,
+.project-detail__metadata a:focus-visible {
+  opacity: 0.45;
+}
+
+.project-detail__content {
+  width: 100%;
+  max-width: 72rem;
+  padding: 5rem 2.5rem 12rem;
+  margin: 0 auto;
+  background: #fff;
+}
+
+.project-detail__content > h1 {
+  margin: 0 0 6.5rem;
+  font-size: clamp(2.5rem, 8vw, 8.75rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  text-transform: none;
+}
+
+.project-page .project-detail__information {
+  display: grid;
+  max-width: none;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  gap: clamp(4rem, 8vw, 8rem);
+  padding: 0;
+  margin: 0;
+}
+
+.project-detail__information h2 {
+  padding: 0 0 1rem;
+  margin: 0 0 0.5rem;
+  border-bottom: 1px solid #000;
+  font-size: clamp(9px, 0.85vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.project-page .project-detail__information dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+}
+
+.project-page .project-detail__information dt,
+.project-page .project-detail__information dd {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+  font-size: clamp(10px, 0.85vw, 14px);
+}
+
+.project-page .project-detail__information dt {
+  color: #707070;
+  font-family: var(--font-sans);
+}
+
+.project-page .project-detail__information dd {
+  font-weight: 500;
+}
+
+.project-page .project-detail__copy {
+  display: grid;
+  gap: 1rem;
+}
+
+.project-page .project-detail__copy p {
+  margin: 0;
+  color: rgb(0 0 0 / 80%);
+  font-size: clamp(12px, 1vw, 18px);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.65;
+  text-transform: none;
+}
+
+.project-page .project-detail__gallery {
+  display: grid;
+  max-width: 64rem;
+  gap: clamp(2rem, 3vw, 2.5rem);
+  padding: 0;
+  margin: 6rem auto 0;
+}
+
+.project-page .project-detail__pager {
+  margin-top: 8rem;
+}
+
+@media (max-width: 42rem) {
+  .project-page .project-detail__hero {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  .project-detail__cover {
+    height: calc(100svh - 4.5rem - env(safe-area-inset-bottom));
+  }
+
+  .project-detail__metadata {
+    min-height: calc(4.5rem + env(safe-area-inset-bottom));
+    align-items: flex-start;
+    padding: 1.25rem 1rem max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .project-detail__metadata > div {
+    max-width: calc(100vw - 6rem);
+  }
+
+  .project-detail__metadata > div i:nth-of-type(n + 2),
+  .project-detail__metadata > div span:nth-of-type(n + 2) {
+    display: none;
+  }
+
+  .project-detail__content {
+    padding: 4rem 1rem 9rem;
+  }
+
+  .project-detail__content > h1 {
+    margin-bottom: 5rem;
+    font-size: clamp(2.75rem, 14vw, 5rem);
+  }
+
+  .project-page .project-detail__information {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+  }
+
+  .project-page .project-detail__gallery {
+    margin-top: 5rem;
+  }
+}
+
 /* About mirrors the original full-height 5/12 portrait and 7/12 typographic grid. */
 .about-page {
   background: #fff;

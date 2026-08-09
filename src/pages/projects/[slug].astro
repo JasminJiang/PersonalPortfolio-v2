@@ -80,51 +80,66 @@ const projectStructuredData = {
   structuredData={projectStructuredData}
 >
   <article class="project-detail">
-    <nav class="project-detail__topbar" aria-label="Project navigation">
-      <a href={`/#${project.data.slug}`} class="project-detail__back">All projects</a>
-      <span>{String(project.data.order).padStart(2, "0")} / 21</span>
-      <a href="/about/">About</a>
-    </nav>
-
     <header class="project-detail__hero">
-      <div class="project-detail__heading" transition:name={`project-title-${project.data.slug}`}>
-        <p class="eyebrow">{project.data.categoryLabel} · {project.data.year}</p>
-        <h1>{project.data.title}</h1>
+      <div class="project-detail__cover" transition:name={`project-cover-${project.data.slug}`}>
+        <CloudflareMedia media={cover} eager sizes={coverSizes} />
       </div>
-      <CloudflareMedia media={cover} eager sizes={coverSizes} />
     </header>
 
-    <div class="project-detail__information">
-      <dl>
-        {project.data.location && <><dt>Location</dt><dd>{project.data.location}</dd></>}
-        <dt>Year</dt><dd>{project.data.year}</dd>
-        <dt>Type</dt><dd>{project.data.categoryLabel}</dd>
-      </dl>
-
-      <div class="project-detail__copy">
-        {
-          project.data.description.length
-            ? project.data.description.map((paragraph) => <p>{paragraph}</p>)
-            : <p>This photographic series is presented as a visual sequence.</p>
-        }
+    <nav class="project-detail__metadata" aria-label="Project navigation">
+      <div>
+        <span>{String(project.data.order).padStart(2, "0")}</span>
+        <i aria-hidden="true">|</i>
+        <strong>{project.data.title}</strong>
+        <i aria-hidden="true">|</i>
+        <span>{project.data.categoryLabel}</span>
+        <i aria-hidden="true">|</i>
+        <span>{project.data.year}</span>
       </div>
-    </div>
-
-    {details.length > 0 && (
-      <section class="project-detail__gallery" aria-label={`${project.data.title} media`}>
-        {details.map((item) => <CloudflareMedia media={item} />)}
-      </section>
-    )}
-
-    <nav class="project-detail__pager" aria-label="Adjacent projects">
-      <a href={`/projects/${previousProject.slug}/`}>
-        <span>Previous</span>
-        <strong>{previousProject.title}</strong>
-      </a>
-      <a href={`/projects/${nextProject.slug}/`}>
-        <span>Next</span>
-        <strong>{nextProject.title}</strong>
+      <a href={`/#${project.data.slug}`} class="project-detail__back">
+        <span class="sr-only">All projects</span>
+        <span aria-hidden="true">Close</span>
       </a>
     </nav>
+
+    <div class="project-detail__content">
+      <h1 transition:name={`project-title-${project.data.slug}`}>{project.data.title}</h1>
+
+      <div class="project-detail__information">
+        <section aria-labelledby="project-details-heading">
+          <h2 id="project-details-heading">Project details</h2>
+          <dl>
+            <dt>Year</dt><dd>{project.data.year}</dd>
+            {project.data.location && <><dt>Location</dt><dd>{project.data.location}</dd></>}
+            <dt>Type</dt><dd>{project.data.categoryLabel}</dd>
+          </dl>
+        </section>
+
+        <div class="project-detail__copy">
+          {
+            project.data.description.length
+              ? project.data.description.map((paragraph) => <p>{paragraph}</p>)
+              : <p>This photographic series is presented as a visual sequence.</p>
+          }
+        </div>
+      </div>
+
+      {details.length > 0 && (
+        <section class="project-detail__gallery" aria-label={`${project.data.title} media`}>
+          {details.map((item) => <CloudflareMedia media={item} />)}
+        </section>
+      )}
+
+      <nav class="project-detail__pager" aria-label="Adjacent projects">
+        <a href={`/projects/${previousProject.slug}/`}>
+          <span>Previous</span>
+          <strong>{previousProject.title}</strong>
+        </a>
+        <a href={`/projects/${nextProject.slug}/`}>
+          <span>Next</span>
+          <strong>{nextProject.title}</strong>
+        </a>
+      </nav>
+    </div>
   </article>
 </BaseLayout>
