@@ -11,7 +11,6 @@ import {
 
 const FULL_TURN = Math.PI * 2;
 const CAROUSEL_RADIUS = 30;
-const WHEEL_SESSION_TIMEOUT_MS = 220;
 const WHEEL_FOLLOW_DAMPING = 5;
 
 interface Props {
@@ -21,6 +20,7 @@ interface Props {
   openingIndex: number | null;
   reducedMotion: boolean;
   onSelect: (index: number) => void;
+  onActive: (index: number) => void;
   onReady: () => void;
   onTextureReady: () => void;
   onContextLost: () => void;
@@ -214,23 +214,29 @@ function CarouselPanel({
   );
 }
 
-function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect, onTextureReady, onHoverChange }: Omit<Props, "onReady" | "onContextLost"> & { onHoverChange: (hovered: boolean) => void }) {
+function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect, onActive, onTextureReady, onHoverChange }: Omit<Props, "onReady" | "onContextLost"> & { onHoverChange: (hovered: boolean) => void }) {
   const ring = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
   const itemAngle = -((activeIndex / slotCount) * FULL_TURN);
   const targetRotation = Math.PI - itemAngle;
   const alignedTarget = useRef(targetRotation);
   const motionTarget = useRef(targetRotation);
-  const wheelMotionUntil = useRef(0);
+  const lastWheelActiveIndex = useRef<number | null>(null);
+  const followingProgrammaticTarget = useRef(true);
 
   useEffect(() => {
     const current = ring.current?.rotation.y ?? targetRotation;
     const turns = Math.round((current - targetRotation) / FULL_TURN);
     const nearestTarget = targetRotation + turns * FULL_TURN;
     alignedTarget.current = nearestTarget;
-    if (performance.now() >= wheelMotionUntil.current) motionTarget.current = nearestTarget;
+    if (lastWheelActiveIndex.current === activeIndex) {
+      lastWheelActiveIndex.current = null;
+    } else {
+      motionTarget.current = nearestTarget;
+      followingProgrammaticTarget.current = true;
+    }
     invalidate();
-  }, [invalidate, reducedMotion, targetRotation]);
+  }, [activeIndex, invalidate, reducedMotion, targetRotation]);
 
   useEffect(() => {
     const handleWheelMotion = (event: Event) => {
@@ -239,7 +245,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
       if (!detail || !Number.isFinite(detail.delta)) return;
       const delta = MathUtils.clamp(detail.delta, -80, 80);
       motionTarget.current += delta * CAROUSEL_WHEEL_ROTATION_FACTOR;
-      wheelMotionUntil.current = performance.now() + WHEEL_SESSION_TIMEOUT_MS;
+      followingProgrammaticTarget.current = false;
       invalidate();
     };
 
@@ -258,6 +264,28 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
     // Preserve the wheel position after input ends, matching the legacy carousel's
     // free rotation instead of pulling the ring back to the nearest project slot.
     ring.current.rotation.y = MathUtils.damp(current, nextTarget, WHEEL_FOLLOW_DAMPING, delta);
+    if (followingProgrammaticTarget.current) {
+      if (Math.abs(ring.current.rotation.y - nextTarget) <= 0.002) {
+        followingProgrammaticTarget.current = false;
+      }
+    } else if (openingIndex === null && projects.length > 0) {
+      const step = FULL_TURN / Math.max(slotCount, 1);
+      let nearestIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      projects.forEach((_, index) => {
+        const baseRotation = Math.PI + index * step;
+        const turns = Math.round((ring.current!.rotation.y - baseRotation) / FULL_TURN);
+        const distance = Math.abs(ring.current!.rotation.y - (baseRotation + turns * FULL_TURN));
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = index;
+        }
+      });
+      if (nearestIndex !== activeIndex && nearestIndex !== lastWheelActiveIndex.current) {
+        lastWheelActiveIndex.current = nearestIndex;
+        onActive(nearestIndex);
+      }
+    }
     if (Math.abs(ring.current.rotation.y - nextTarget) > 0.0005) invalidate();
 
   });
@@ -295,6 +323,7 @@ export default function ProjectCarouselScene({
   openingIndex,
   reducedMotion,
   onSelect,
+  onActive,
   onReady,
   onTextureReady,
   onContextLost,
@@ -322,6 +351,7 @@ export default function ProjectCarouselScene({
         openingIndex={openingIndex}
         reducedMotion={reducedMotion}
         onSelect={onSelect}
+        onActive={onActive}
         onTextureReady={onTextureReady}
         onHoverChange={setPanelHovered}
       />

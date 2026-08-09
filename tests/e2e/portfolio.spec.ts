@@ -46,6 +46,24 @@ test("carousel supports buttons, keyboard, wheel, and route restoration", async 
   await expect(heading).toHaveText("Aeolian Resonance");
 });
 
+test("high-frequency wheel bursts are capped to one safe frame of motion", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  await expect(carousel).toHaveAttribute("data-state", "ready");
+  const heading = carousel.getByRole("heading", { level: 1 });
+  await expect(heading).toHaveText("Aeolian Resonance");
+
+  await carousel.evaluate((element) => {
+    for (let index = 0; index < 12; index += 1) {
+      element.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 80 }));
+    }
+  });
+
+  await page.waitForTimeout(500);
+  await expect(heading).toHaveText("Aeolian Resonance");
+});
+
 test("pointer drag changes the active project", async ({ page, isMobile }) => {
   test.skip(isMobile, "Touch behavior is covered by the mobile swipe test");
   await page.goto("/");
