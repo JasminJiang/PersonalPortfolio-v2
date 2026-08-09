@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { navigate } from "astro:transitions/client";
 
 export interface CarouselProject {
   slug: string;
@@ -81,10 +82,12 @@ export default function ProjectCarousel({ projects }: Props) {
   const [sceneReady, setSceneReady] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<ProjectFilter>("all");
+  const [openingIndex, setOpeningIndex] = useState<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const shell = useRef<HTMLElement>(null);
   const activeIndexRef = useRef(0);
   const sceneRequested = useRef(false);
+  const openingTimer = useRef<number | undefined>(undefined);
   const suppressPanelSelectUntil = useRef(0);
   const drag = useRef<{
     pointerId: number;
@@ -155,19 +158,36 @@ export default function ProjectCarousel({ projects }: Props) {
   }, [filteredProjects]);
 
   const moveBy = useCallback((distance: number) => {
+    if (openingIndex !== null) return;
     requestScene();
     activateProject(activeIndexRef.current + distance);
-  }, [activateProject, requestScene]);
+  }, [activateProject, openingIndex, requestScene]);
+
+  const beginOpen = useCallback((index: number) => {
+    if (openingIndex !== null) return;
+    const project = filteredProjects[index];
+    if (!project) return;
+    activeIndexRef.current = index;
+    setActiveIndex(index);
+    setOpeningIndex(index);
+    history.replaceState(history.state, "", `/#${project.slug}`);
+    openingTimer.current = window.setTimeout(() => {
+      void navigate(`/projects/${project.slug}/`);
+    }, reducedMotion ? 40 : 560);
+  }, [filteredProjects, openingIndex, reducedMotion]);
+
+  useEffect(() => () => {
+    if (openingTimer.current !== undefined) window.clearTimeout(openingTimer.current);
+  }, []);
 
   const selectPanel = useCallback((index: number) => {
     if (performance.now() < suppressPanelSelectUntil.current) return;
     if (index === activeIndexRef.current) {
-      const project = filteredProjects[index];
-      if (project) window.location.assign(`/projects/${project.slug}/`);
+      beginOpen(index);
       return;
     }
     activateProject(index);
-  }, [activateProject, filteredProjects]);
+  }, [activateProject, beginOpen]);
 
   const changeFilter = useCallback((nextFilter: ProjectFilter) => {
     if (nextFilter === filter) return;
@@ -283,6 +303,7 @@ export default function ProjectCarousel({ projects }: Props) {
       className="carousel-shell"
       data-state={renderState}
       data-scene-state={sceneReady ? "ready" : sceneEnabled ? "loading" : "deferred"}
+      data-opening={openingIndex !== null ? "true" : "false"}
       aria-label="Interactive project carousel"
       aria-roledescription="carousel"
       aria-describedby="carousel-instructions"
@@ -342,6 +363,7 @@ export default function ProjectCarousel({ projects }: Props) {
                 projects={filteredProjects}
                 slotCount={projects.length}
                 activeIndex={activeIndex}
+                openingIndex={openingIndex}
                 reducedMotion={reducedMotion}
                 onSelect={selectPanel}
                 onReady={markSceneReady}
@@ -354,7 +376,14 @@ export default function ProjectCarousel({ projects }: Props) {
 
       <div className="carousel-shell__status" aria-live="polite" aria-atomic="true">
         <h1>{activeProject.title}</h1>
-        <a href={`/projects/${activeProject.slug}/`}>
+        <a
+          href={`/projects/${activeProject.slug}/`}
+          onClick={(event) => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            beginOpen(activeIndex);
+          }}
+        >
           <span className="sr-only">View project</span>
         </a>
       </div>

@@ -299,8 +299,9 @@ main {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: var(--color-white);
+  background: radial-gradient(circle at center, #fff 0%, #f3f3f2 100%);
   opacity: 1;
+  pointer-events: none;
   transition: opacity 360ms var(--ease-out-expo), visibility 360ms linear;
 }
 
@@ -315,16 +316,16 @@ main {
 }
 
 .portfolio-loader__scene {
-  width: 10rem;
-  height: 10rem;
-  perspective: 26rem;
+  width: 16rem;
+  height: 8rem;
+  perspective: 32rem;
 }
 
 .portfolio-loader__cylinder {
   position: relative;
   width: 100%;
   height: 100%;
-  animation: cylinder-spin 2.6s linear infinite;
+  animation: cylinder-spin 4.8s linear infinite;
   transform-style: preserve-3d;
 }
 
@@ -332,21 +333,53 @@ main {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 1.25rem;
-  margin-left: -0.625rem;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  width: 8rem;
+  margin-left: -4rem;
+  color: #222;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.08em;
   text-align: center;
-  transform: rotateY(calc(var(--glyph-index) * 360deg / var(--glyph-count))) translateZ(4.25rem);
+  transform: translateY(-50%) rotateY(calc(var(--word-index) * 90deg)) translateZ(5.25rem);
   transform-origin: center;
 }
 
-.portfolio-loader__caption {
+.portfolio-loader__progress {
   position: absolute;
-  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  bottom: max(9vh, env(safe-area-inset-bottom));
+  left: 50%;
+  display: grid;
+  width: 15rem;
+  justify-items: center;
+  gap: 0.65rem;
+  transform: translateX(-50%);
   font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.portfolio-loader__progress i {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 1px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 18%);
+}
+
+.portfolio-loader__progress b {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.portfolio-loader__progress span:last-child {
+  color: #707070;
   font-size: 0.5625rem;
-  letter-spacing: 0.08em;
 }
 
 .section-label {
@@ -1577,7 +1610,7 @@ html[data-carousel-state="ready"] .project-index {
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgb(0 0 0 / 40%);
+  color: #707070;
   cursor: pointer;
   font-size: clamp(9px, 0.75vw, 13px);
   font-weight: 500;
@@ -1631,6 +1664,7 @@ html[data-carousel-state="ready"] .project-index {
   border: 0;
   background: #f0f0ee;
   box-shadow: none;
+  transition: transform 560ms var(--ease-out-expo), opacity 320ms ease;
 }
 
 .home-page .carousel-shell__static-panel--previous {
@@ -1732,6 +1766,22 @@ html[data-carousel-state="ready"] .project-index {
 
 .home-page .carousel-shell__hint {
   display: none;
+}
+
+.home-page .carousel-shell__header,
+.home-page .carousel-shell__footer {
+  transition: opacity 240ms ease;
+}
+
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__header,
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__footer,
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--previous,
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--next {
+  opacity: 0;
+}
+
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--active {
+  transform: translate(-50%, -50%) scale(2.9);
 }
 
 @media (max-width: 42rem) {

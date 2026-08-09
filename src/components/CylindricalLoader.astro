@@ -1,30 +1,57 @@
 ---
-const glyphs = Array.from("JASMIN—XINJIE—");
+const words = ["ARCH", "MR", "UX", "PHOTO"];
 ---
 
 <div class="portfolio-loader" data-portfolio-loader role="status" aria-live="polite">
   <p class="sr-only">Loading Jasmin Xinjie Jiang’s portfolio</p>
   <div class="portfolio-loader__scene" aria-hidden="true">
-    <div class="portfolio-loader__cylinder" style={`--glyph-count: ${glyphs.length}`}>
+    <div class="portfolio-loader__cylinder">
       {
-        glyphs.map((glyph, index) => (
-          <span style={`--glyph-index: ${index}`}>{glyph}</span>
+        words.map((word, index) => (
+          <span style={`--word-index: ${index}`}>{word}</span>
         ))
       }
     </div>
   </div>
-  <span class="portfolio-loader__caption" aria-hidden="true">Portfolio / 2026</span>
+  <div class="portfolio-loader__progress" aria-hidden="true">
+    <span>Loading</span>
+    <i><b data-loader-progress-bar></b></i>
+    <span data-loader-progress>0%</span>
+  </div>
 </div>
 
 <script>
+  const loaderStartedAt = performance.now();
+  const minimumLoaderDuration = 900;
+  let loaderFrame = 0;
+
+  const updateLoaderProgress = () => {
+    const elapsed = performance.now() - loaderStartedAt;
+    const progress = Math.min(94, Math.round((elapsed / minimumLoaderDuration) * 94));
+    const label = document.querySelector<HTMLElement>("[data-loader-progress]");
+    const bar = document.querySelector<HTMLElement>("[data-loader-progress-bar]");
+    if (label) label.textContent = `${progress}%`;
+    if (bar) bar.style.transform = `scaleX(${progress / 100})`;
+    if (progress < 94) loaderFrame = window.requestAnimationFrame(updateLoaderProgress);
+  };
+
   const dismissLoader = () => {
     const loader = document.querySelector<HTMLElement>("[data-portfolio-loader]");
     if (!loader || loader.dataset.state === "complete") return;
-    loader.dataset.state = "complete";
-    loader.addEventListener("transitionend", () => loader.setAttribute("hidden", ""), {
-      once: true,
-    });
+    const wait = Math.max(0, minimumLoaderDuration - (performance.now() - loaderStartedAt));
+    window.setTimeout(() => {
+      const label = loader.querySelector<HTMLElement>("[data-loader-progress]");
+      const bar = loader.querySelector<HTMLElement>("[data-loader-progress-bar]");
+      if (label) label.textContent = "100%";
+      if (bar) bar.style.transform = "scaleX(1)";
+      loader.dataset.state = "complete";
+      loader.addEventListener("transitionend", () => loader.setAttribute("hidden", ""), {
+        once: true,
+      });
+    }, wait);
   };
+
+  loaderFrame = window.requestAnimationFrame(updateLoaderProgress);
 
   document.addEventListener("astro:page-load", dismissLoader);
 
@@ -33,4 +60,6 @@ const glyphs = Array.from("JASMIN—XINJIE—");
   } else {
     window.addEventListener("load", dismissLoader, { once: true });
   }
+
+  document.addEventListener("astro:before-swap", () => window.cancelAnimationFrame(loaderFrame), { once: true });
 </script>

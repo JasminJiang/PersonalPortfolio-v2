@@ -11,6 +11,7 @@ interface Props {
   projects: CarouselProject[];
   slotCount: number;
   activeIndex: number;
+  openingIndex: number | null;
   reducedMotion: boolean;
   onSelect: (index: number) => void;
   onReady: () => void;
@@ -22,6 +23,8 @@ function CarouselPanel({
   index,
   slotCount,
   active,
+  opening,
+  dimmed,
   coverSrc,
   reducedMotion,
   onSelect,
@@ -30,6 +33,8 @@ function CarouselPanel({
   index: number;
   slotCount: number;
   active: boolean;
+  opening: boolean;
+  dimmed: boolean;
   coverSrc?: string;
   reducedMotion: boolean;
   onSelect: (index: number) => void;
@@ -87,19 +92,20 @@ function CarouselPanel({
 
   useFrame((_, delta) => {
     if (!panel.current || !surface.current) return;
-    const scale = hovered ? 1.035 : 1;
-    const innerGlowOpacity = hovered ? 0.24 : 0;
-    const outerGlowOpacity = hovered ? 0.12 : 0;
+    const scale = opening ? 2.9 : hovered && !dimmed ? 1.035 : 1;
+    const targetOpacity = dimmed ? 0 : 1;
+    const innerGlowOpacity = hovered && !opening && !dimmed ? 0.24 : 0;
+    const outerGlowOpacity = hovered && !opening && !dimmed ? 0.12 : 0;
     if (reducedMotion) {
       panel.current.scale.set(scale, scale, 1);
-      surface.current.opacity = 1;
+      surface.current.opacity = targetOpacity;
       if (innerGlow.current) innerGlow.current.opacity = 0;
       if (outerGlow.current) outerGlow.current.opacity = 0;
       return;
     }
     panel.current.scale.x = MathUtils.damp(panel.current.scale.x, scale, 7, delta);
     panel.current.scale.y = MathUtils.damp(panel.current.scale.y, scale, 7, delta);
-    surface.current.opacity = MathUtils.damp(surface.current.opacity, 1, 8, delta);
+    surface.current.opacity = MathUtils.damp(surface.current.opacity, targetOpacity, 8, delta);
     if (innerGlow.current) {
       innerGlow.current.opacity = MathUtils.damp(innerGlow.current.opacity, innerGlowOpacity, 8, delta);
     }
@@ -108,7 +114,7 @@ function CarouselPanel({
     }
     if (
       Math.abs(panel.current.scale.x - scale) > 0.0005
-      || Math.abs(surface.current.opacity - 1) > 0.0005
+      || Math.abs(surface.current.opacity - targetOpacity) > 0.0005
       || Math.abs((innerGlow.current?.opacity ?? 0) - innerGlowOpacity) > 0.0005
       || Math.abs((outerGlow.current?.opacity ?? 0) - outerGlowOpacity) > 0.0005
     ) {
@@ -195,7 +201,7 @@ function CarouselPanel({
   );
 }
 
-function CarouselRing({ projects, slotCount, activeIndex, reducedMotion, onSelect }: Omit<Props, "onReady" | "onContextLost">) {
+function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedMotion, onSelect }: Omit<Props, "onReady" | "onContextLost">) {
   const ring = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
   const itemAngle = -((activeIndex / slotCount) * FULL_TURN);
@@ -216,6 +222,7 @@ function CarouselRing({ projects, slotCount, activeIndex, reducedMotion, onSelec
     }
     ring.current.rotation.y = MathUtils.damp(current, nearestTarget, 5.5, delta);
     if (Math.abs(ring.current.rotation.y - nearestTarget) > 0.0005) invalidate();
+
   });
 
   return (
@@ -231,6 +238,8 @@ function CarouselRing({ projects, slotCount, activeIndex, reducedMotion, onSelec
             index={index}
             slotCount={slotCount}
             active={index === activeIndex}
+            opening={index === openingIndex}
+            dimmed={openingIndex !== null && index !== openingIndex}
             coverSrc={wrappedDistance <= 1 ? project.coverSrc : undefined}
             reducedMotion={reducedMotion}
             onSelect={onSelect}
@@ -245,6 +254,7 @@ export default function ProjectCarouselScene({
   projects,
   slotCount,
   activeIndex,
+  openingIndex,
   reducedMotion,
   onSelect,
   onReady,
@@ -268,6 +278,7 @@ export default function ProjectCarouselScene({
         projects={projects}
         slotCount={slotCount}
         activeIndex={activeIndex}
+        openingIndex={openingIndex}
         reducedMotion={reducedMotion}
         onSelect={onSelect}
       />
