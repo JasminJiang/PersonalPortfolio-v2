@@ -1672,6 +1672,11 @@ html[data-carousel-state="ready"] .project-index {
   transform: translate(-158%, -50%);
 }
 
+.home-page .carousel-shell__static-panel--previous-far {
+  opacity: 1;
+  transform: translate(-266%, -50%);
+}
+
 .home-page .carousel-shell__static-panel--active {
   transform: translate(-50%, -50%);
 }
@@ -1679,6 +1684,11 @@ html[data-carousel-state="ready"] .project-index {
 .home-page .carousel-shell__static-panel--next {
   opacity: 1;
   transform: translate(58%, -50%);
+}
+
+.home-page .carousel-shell__static-panel--next-far {
+  opacity: 1;
+  transform: translate(166%, -50%);
 }
 
 .home-page .carousel-shell__status {
@@ -1776,7 +1786,9 @@ html[data-carousel-state="ready"] .project-index {
 .home-page .carousel-shell[data-opening="true"] .carousel-shell__header,
 .home-page .carousel-shell[data-opening="true"] .carousel-shell__footer,
 .home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--previous,
-.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--next {
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--next,
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--previous-far,
+.home-page .carousel-shell[data-opening="true"] .carousel-shell__static-panel--next-far {
   opacity: 0;
 }
 
@@ -1810,8 +1822,16 @@ html[data-carousel-state="ready"] .project-index {
     transform: translate(-155%, -50%);
   }
 
+  .home-page .carousel-shell__static-panel--previous-far {
+    transform: translate(-260%, -50%);
+  }
+
   .home-page .carousel-shell__static-panel--next {
     transform: translate(55%, -50%);
+  }
+
+  .home-page .carousel-shell__static-panel--next-far {
+    transform: translate(160%, -50%);
   }
 
   .carousel-shell__footer {

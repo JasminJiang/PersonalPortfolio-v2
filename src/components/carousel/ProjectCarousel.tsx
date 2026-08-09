@@ -22,6 +22,7 @@ export interface CarouselProject {
   categoryLabel: string;
   year: number;
   coverSrc: string;
+  previewSrc: string;
 }
 
 interface Props {
@@ -296,6 +297,9 @@ export default function ProjectCarousel({ projects }: Props) {
   const markSceneReady = useCallback(() => setSceneReady(true), []);
 
   if (!activeProject || renderState === "fallback") return null;
+  const previewProjects = [-2, -1, 0, 1, 2].map((offset) => (
+    filteredProjects[(activeIndex + offset + filteredProjects.length) % filteredProjects.length] ?? activeProject
+  ));
 
   return (
     <section
@@ -338,16 +342,16 @@ export default function ProjectCarousel({ projects }: Props) {
       </header>
 
       <div className="carousel-shell__static" aria-hidden="true">
-        {[previousProject ?? activeProject, activeProject, nextProject ?? activeProject].map((project, previewIndex) => (
+        {previewProjects.map((project, previewIndex) => (
           <figure
-            className={`carousel-shell__static-panel carousel-shell__static-panel--${["previous", "active", "next"][previewIndex]}`}
+            className={`carousel-shell__static-panel carousel-shell__static-panel--${["previous-far", "previous", "active", "next", "next-far"][previewIndex]}`}
             key={`${project.slug}-${previewIndex}`}
           >
             <img
-              src={project.coverSrc}
+              src={previewIndex === 2 || Math.abs(previewIndex - 2) === 1 ? project.coverSrc : project.previewSrc}
               alt=""
-              loading={previewIndex === 1 ? "eager" : "lazy"}
-              fetchPriority={previewIndex === 1 ? "high" : "low"}
+              loading={previewIndex === 2 ? "eager" : "lazy"}
+              fetchPriority={previewIndex === 2 ? "high" : "low"}
               decoding="async"
               draggable={false}
             />

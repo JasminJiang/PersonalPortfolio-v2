@@ -240,7 +240,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
             active={index === activeIndex}
             opening={index === openingIndex}
             dimmed={openingIndex !== null && index !== openingIndex}
-            coverSrc={wrappedDistance <= 1 ? project.coverSrc : undefined}
+            coverSrc={wrappedDistance <= 1 ? project.coverSrc : wrappedDistance <= 2 ? project.previewSrc : undefined}
             reducedMotion={reducedMotion}
             onSelect={onSelect}
           />
