@@ -15,7 +15,7 @@ interface Props {
   reducedMotion: boolean;
   onSelect: (index: number) => void;
   onReady: () => void;
-  onTextureReady: () => void;
+  onTextureReady: (coverSrc: string) => void;
   onContextLost: () => void;
 }
 
@@ -40,7 +40,7 @@ function CarouselPanel({
   coverSrc?: string;
   reducedMotion: boolean;
   onSelect: (index: number) => void;
-  onActiveTextureReady: () => void;
+  onActiveTextureReady: (coverSrc: string) => void;
 }) {
   const panel = useRef<Mesh>(null);
   const surface = useRef<MeshBasicMaterial>(null);
@@ -94,8 +94,8 @@ function CarouselPanel({
   }, [active, invalidate, reducedMotion]);
 
   useEffect(() => {
-    if (active && texture) onActiveTextureReady();
-  }, [active, onActiveTextureReady, texture]);
+    if (active && texture && coverSrc) onActiveTextureReady(coverSrc);
+  }, [active, coverSrc, onActiveTextureReady, texture]);
 
   useFrame((_, delta) => {
     if (!panel.current || !surface.current) return;
@@ -233,7 +233,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
   });
 
   return (
-    <group ref={ring} rotation={[0, targetRotation, 0]}>
+    <group ref={ring} position={[0, -1.15, 0]} rotation={[0, targetRotation, 0]}>
       {projects.map((project, index) => {
         const directDistance = Math.abs(index - activeIndex);
         const wrappedDistance = Math.min(directDistance, projects.length - directDistance);

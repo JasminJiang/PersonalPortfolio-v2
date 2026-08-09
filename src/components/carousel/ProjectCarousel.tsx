@@ -81,7 +81,7 @@ export default function ProjectCarousel({ projects }: Props) {
   const [renderState, setRenderState] = useState<"checking" | "loading" | "ready" | "fallback">("checking");
   const [sceneEnabled, setSceneEnabled] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const [activeTextureReady, setActiveTextureReady] = useState(false);
+  const [readyCoverSrc, setReadyCoverSrc] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<ProjectFilter>("all");
   const [openingIndex, setOpeningIndex] = useState<number | null>(null);
@@ -102,6 +102,7 @@ export default function ProjectCarousel({ projects }: Props) {
     [filter, projects],
   );
   const activeProject = filteredProjects[activeIndex] ?? filteredProjects[0] ?? projects[0];
+  const activeTextureReady = readyCoverSrc === activeProject?.coverSrc;
   const previousProject = filteredProjects[(activeIndex - 1 + filteredProjects.length) % filteredProjects.length];
   const nextProject = filteredProjects[(activeIndex + 1) % filteredProjects.length];
 
@@ -154,7 +155,7 @@ export default function ProjectCarousel({ projects }: Props) {
     const index = (requestedIndex + filteredProjects.length) % filteredProjects.length;
     const project = filteredProjects[index];
     if (!project) return;
-    if (sceneRequested.current) setActiveTextureReady(false);
+    if (sceneRequested.current) setReadyCoverSrc(null);
     activeIndexRef.current = index;
     setActiveIndex(index);
     history.replaceState(history.state, "", `/#${project.slug}`);
@@ -200,7 +201,7 @@ export default function ProjectCarousel({ projects }: Props) {
     const firstProject = nextProjects[0];
     activeIndexRef.current = 0;
     setActiveIndex(0);
-    if (sceneRequested.current) setActiveTextureReady(false);
+    if (sceneRequested.current) setReadyCoverSrc(null);
     setFilter(nextFilter);
     if (firstProject) history.replaceState(history.state, "", `/#${firstProject.slug}`);
     requestScene();
@@ -295,11 +296,11 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const useStaticFallback = useCallback(() => {
     setSceneReady(false);
-    setActiveTextureReady(false);
+    setReadyCoverSrc(null);
     setSceneEnabled(false);
   }, []);
   const markSceneReady = useCallback(() => setSceneReady(true), []);
-  const markActiveTextureReady = useCallback(() => setActiveTextureReady(true), []);
+  const markActiveTextureReady = useCallback((coverSrc: string) => setReadyCoverSrc(coverSrc), []);
 
   if (!activeProject || renderState === "fallback") return null;
   const previewProjects = [-2, -1, 0, 1, 2].map((offset) => (
