@@ -1110,3 +1110,252 @@ html[data-carousel-state="ready"] .project-index {
     transform: rotateY(-22deg);
   }
 }
+
+/* The public portfolio keeps the original site's sparse gallery composition. */
+.home-page {
+  height: 100svh;
+  overflow: hidden;
+  background: #fff;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.home-page main {
+  height: 100svh;
+  overflow: hidden;
+}
+
+.home-page .carousel-shell {
+  position: fixed;
+  inset: 0;
+  height: 100svh;
+  background: #fff;
+}
+
+.carousel-shell__header {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.carousel-shell__filters {
+  position: absolute;
+  top: 4vh;
+  left: 45%;
+  display: grid;
+  width: 17rem;
+  pointer-events: auto;
+}
+
+.carousel-shell__filters button {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgb(0 0 0 / 40%);
+  cursor: pointer;
+  font-size: clamp(9px, 0.75vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.carousel-shell__filters button:first-child {
+  margin-bottom: 1.5rem;
+}
+
+.carousel-shell__filters button span:last-child {
+  padding-top: 0.08rem;
+  font-size: clamp(7px, 0.6vw, 11px);
+}
+
+.carousel-shell__filters button:hover,
+.carousel-shell__filters button:focus-visible,
+.carousel-shell__filters button.is-active {
+  color: #000;
+}
+
+.carousel-shell__about {
+  position: absolute;
+  top: 4vh;
+  right: 1.5rem;
+  color: #000;
+  font-size: clamp(9px, 0.75vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+  text-transform: uppercase;
+  transition: opacity 180ms ease;
+}
+
+.carousel-shell__about:hover,
+.carousel-shell__about:focus-visible {
+  opacity: 0.55;
+}
+
+.home-page .carousel-shell__static {
+  perspective: 70rem;
+}
+
+.home-page .carousel-shell__static-panel {
+  top: 55%;
+  width: clamp(13rem, 19.5vw, 17.5rem);
+  border: 0;
+  background: #f0f0ee;
+  box-shadow: none;
+}
+
+.home-page .carousel-shell__static-panel--previous {
+  opacity: 1;
+  transform: translate(-158%, -50%);
+}
+
+.home-page .carousel-shell__static-panel--active {
+  transform: translate(-50%, -50%);
+}
+
+.home-page .carousel-shell__static-panel--next {
+  opacity: 1;
+  transform: translate(58%, -50%);
+}
+
+.home-page .carousel-shell__status {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  z-index: 4;
+  display: block;
+  width: clamp(13rem, 19.5vw, 17.5rem);
+  max-width: none;
+  height: clamp(7.3125rem, 10.97vw, 9.84375rem);
+  aspect-ratio: 16 / 9;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.home-page .carousel-shell__status h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.home-page .carousel-shell__status a {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  justify-self: stretch;
+  padding: 0;
+  border: 0;
+  background: rgb(255 255 255 / 0.001%);
+  pointer-events: auto;
+}
+
+.carousel-shell__footer {
+  position: absolute;
+  right: 1.5rem;
+  bottom: max(2rem, env(safe-area-inset-bottom));
+  left: 1.5rem;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  color: rgb(0 0 0 / 40%);
+  font-size: clamp(9px, 0.75vw, 13px);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.carousel-shell__footer p {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0;
+}
+
+.carousel-shell__footer strong {
+  color: #000;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-page .carousel-shell__controls.sr-only-controls {
+  top: auto;
+  right: 1.5rem;
+  bottom: 1.25rem;
+  z-index: 6;
+  opacity: 0;
+}
+
+.home-page .carousel-shell__controls.sr-only-controls button {
+  min-width: 2.75rem;
+  width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+}
+
+.home-page .carousel-shell__hint {
+  display: none;
+}
+
+@media (max-width: 42rem) {
+  .carousel-shell__filters {
+    top: max(1.25rem, env(safe-area-inset-top));
+    left: 1rem;
+    width: min(15rem, calc(100vw - 6rem));
+  }
+
+  .carousel-shell__filters button:first-child {
+    margin-bottom: 1rem;
+  }
+
+  .carousel-shell__about {
+    top: max(1.25rem, env(safe-area-inset-top));
+    right: 1rem;
+  }
+
+  .home-page .carousel-shell__static-panel,
+  .home-page .carousel-shell__status {
+    top: 56%;
+    width: min(58vw, 16rem);
+  }
+
+  .home-page .carousel-shell__static-panel--previous {
+    transform: translate(-155%, -50%);
+  }
+
+  .home-page .carousel-shell__static-panel--next {
+    transform: translate(55%, -50%);
+  }
+
+  .carousel-shell__footer {
+    right: 1rem;
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    left: 1rem;
+  }
+
+  .carousel-shell__footer p {
+    max-width: calc(100vw - 5.5rem);
+  }
+
+  .carousel-shell__footer strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

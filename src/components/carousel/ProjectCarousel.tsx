@@ -8,6 +8,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -16,6 +17,7 @@ export interface CarouselProject {
   slug: string;
   order: number;
   title: string;
+  category: "architecture" | "immersive-media" | "ui-ux" | "photography";
   categoryLabel: string;
   year: number;
   coverSrc: string;
@@ -28,6 +30,14 @@ interface Props {
 const DRAG_STEP_PX = 56;
 const AUTOMATIC_SCENE_DELAY_MS = 12_000;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
+const FILTERS = [
+  { id: "all", label: "All projects" },
+  { id: "architecture", label: "Architecture design" },
+  { id: "immersive-media", label: "MR" },
+  { id: "ui-ux", label: "UIUX" },
+  { id: "photography", label: "Photography" },
+] as const;
+type ProjectFilter = (typeof FILTERS)[number]["id"];
 
 class CarouselErrorBoundary extends Component<{
   children: ReactNode;
@@ -70,6 +80,7 @@ export default function ProjectCarousel({ projects }: Props) {
   const [sceneEnabled, setSceneEnabled] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [filter, setFilter] = useState<ProjectFilter>("all");
   const [reducedMotion, setReducedMotion] = useState(false);
   const shell = useRef<HTMLElement>(null);
   const activeIndexRef = useRef(0);
@@ -81,9 +92,13 @@ export default function ProjectCarousel({ projects }: Props) {
     stepX: number;
     moved: boolean;
   } | null>(null);
-  const activeProject = projects[activeIndex] ?? projects[0];
-  const previousProject = projects[(activeIndex - 1 + projects.length) % projects.length];
-  const nextProject = projects[(activeIndex + 1) % projects.length];
+  const filteredProjects = useMemo(
+    () => filter === "all" ? projects : projects.filter((project) => project.category === filter),
+    [filter, projects],
+  );
+  const activeProject = filteredProjects[activeIndex] ?? filteredProjects[0] ?? projects[0];
+  const previousProject = filteredProjects[(activeIndex - 1 + filteredProjects.length) % filteredProjects.length];
+  const nextProject = filteredProjects[(activeIndex + 1) % filteredProjects.length];
 
   const requestScene = useCallback(() => {
     if (sceneRequested.current) return;
@@ -94,7 +109,7 @@ export default function ProjectCarousel({ projects }: Props) {
   useEffect(() => {
     let automaticSceneTimer: number | undefined;
     const setupFrame = window.requestAnimationFrame(() => {
-      const initialIndex = projectIndexFromHash(projects);
+      const initialIndex = projectIndexFromHash(filteredProjects);
       activeIndexRef.current = initialIndex;
       setActiveIndex(initialIndex);
       if (!supportsWebGL()) {
@@ -115,7 +130,7 @@ export default function ProjectCarousel({ projects }: Props) {
       if (automaticSceneTimer !== undefined) window.clearTimeout(automaticSceneTimer);
       document.documentElement.removeAttribute("data-carousel-state");
     };
-  }, [projects, requestScene]);
+  }, [filteredProjects, requestScene]);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -130,14 +145,14 @@ export default function ProjectCarousel({ projects }: Props) {
   }, [renderState]);
 
   const activateProject = useCallback((requestedIndex: number) => {
-    if (projects.length === 0) return;
-    const index = (requestedIndex + projects.length) % projects.length;
-    const project = projects[index];
+    if (filteredProjects.length === 0) return;
+    const index = (requestedIndex + filteredProjects.length) % filteredProjects.length;
+    const project = filteredProjects[index];
     if (!project) return;
     activeIndexRef.current = index;
     setActiveIndex(index);
     history.replaceState(history.state, "", `/#${project.slug}`);
-  }, [projects]);
+  }, [filteredProjects]);
 
   const moveBy = useCallback((distance: number) => {
     requestScene();
@@ -146,8 +161,26 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const selectPanel = useCallback((index: number) => {
     if (performance.now() < suppressPanelSelectUntil.current) return;
+    if (index === activeIndexRef.current) {
+      const project = filteredProjects[index];
+      if (project) window.location.assign(`/projects/${project.slug}/`);
+      return;
+    }
     activateProject(index);
-  }, [activateProject]);
+  }, [activateProject, filteredProjects]);
+
+  const changeFilter = useCallback((nextFilter: ProjectFilter) => {
+    if (nextFilter === filter) return;
+    const nextProjects = nextFilter === "all"
+      ? projects
+      : projects.filter((project) => project.category === nextFilter);
+    const firstProject = nextProjects[0];
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
+    setFilter(nextFilter);
+    if (firstProject) history.replaceState(history.state, "", `/#${firstProject.slug}`);
+    requestScene();
+  }, [filter, projects, requestScene]);
 
   useEffect(() => {
     const element = shell.current;
@@ -228,7 +261,7 @@ export default function ProjectCarousel({ projects }: Props) {
       ArrowRight: () => moveBy(1),
       ArrowDown: () => moveBy(1),
       Home: () => activateProject(0),
-      End: () => activateProject(projects.length - 1),
+      End: () => activateProject(filteredProjects.length - 1),
     };
     const action = actions[event.key];
     if (!action) return;
@@ -260,6 +293,29 @@ export default function ProjectCarousel({ projects }: Props) {
       onPointerUp={endPointerGesture}
       onPointerCancel={endPointerGesture}
     >
+      <header className="carousel-shell__header">
+        <nav className="carousel-shell__filters" aria-label="Project categories">
+          {FILTERS.map((item) => {
+            const count = item.id === "all"
+              ? projects.length
+              : projects.filter((project) => project.category === item.id).length;
+            return (
+              <button
+                type="button"
+                key={item.id}
+                className={filter === item.id ? "is-active" : undefined}
+                aria-pressed={filter === item.id}
+                onClick={() => changeFilter(item.id)}
+              >
+                <span>{item.label}</span>
+                <span aria-hidden="true">[{String(count).padStart(2, "0")}]</span>
+              </button>
+            );
+          })}
+        </nav>
+        <a className="carousel-shell__about" href="/about/">About</a>
+      </header>
+
       <div className="carousel-shell__static" aria-hidden="true">
         {[previousProject ?? activeProject, activeProject, nextProject ?? activeProject].map((project, previewIndex) => (
           <figure
@@ -283,7 +339,8 @@ export default function ProjectCarousel({ projects }: Props) {
           <CarouselErrorBoundary onError={useStaticFallback}>
             <Suspense fallback={null}>
               <LazyCarouselScene
-                projects={projects}
+                projects={filteredProjects}
+                slotCount={projects.length}
                 activeIndex={activeIndex}
                 reducedMotion={reducedMotion}
                 onSelect={selectPanel}
@@ -296,15 +353,21 @@ export default function ProjectCarousel({ projects }: Props) {
       </div>
 
       <div className="carousel-shell__status" aria-live="polite" aria-atomic="true">
-        <p>
-          <span>{String(activeProject.order).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span>
-          <span>{activeProject.categoryLabel} · {activeProject.year}</span>
-        </p>
         <h1>{activeProject.title}</h1>
-        <a href={`/projects/${activeProject.slug}/`}>View project</a>
+        <a href={`/projects/${activeProject.slug}/`}>
+          <span className="sr-only">View project</span>
+        </a>
       </div>
 
-      <div className="carousel-shell__controls" role="group" aria-label="Carousel controls">
+      <footer className="carousel-shell__footer" aria-hidden="true">
+        <p>
+          <span>{String(activeProject.order).padStart(2, "0")} —</span>
+          <strong>{activeProject.title}</strong>
+        </p>
+        <span>{activeProject.year}</span>
+      </footer>
+
+      <div className="carousel-shell__controls sr-only-controls" role="group" aria-label="Carousel controls">
         <button
           type="button"
           onClick={() => moveBy(-1)}
