@@ -36,7 +36,7 @@ interface Props {
 }
 
 const DRAG_STEP_PX = 56;
-const WHEEL_INPUT_RESET_MS = 160;
+const WHEEL_INPUT_RESET_MS = 220;
 const AUTOMATIC_SCENE_DELAY_MS = 0;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
 const FILTERS = [

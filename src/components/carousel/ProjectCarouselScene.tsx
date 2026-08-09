@@ -11,7 +11,8 @@ import {
 
 const FULL_TURN = Math.PI * 2;
 const CAROUSEL_RADIUS = 30;
-const WHEEL_SETTLE_DELAY_MS = 150;
+const WHEEL_SESSION_TIMEOUT_MS = 220;
+const WHEEL_FOLLOW_DAMPING = 5;
 
 interface Props {
   projects: CarouselProject[];
@@ -238,7 +239,7 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
       if (!detail || !Number.isFinite(detail.delta)) return;
       const delta = MathUtils.clamp(detail.delta, -80, 80);
       motionTarget.current += delta * CAROUSEL_WHEEL_ROTATION_FACTOR;
-      wheelMotionUntil.current = performance.now() + WHEEL_SETTLE_DELAY_MS;
+      wheelMotionUntil.current = performance.now() + WHEEL_SESSION_TIMEOUT_MS;
       invalidate();
     };
 
@@ -249,14 +250,14 @@ function CarouselRing({ projects, slotCount, activeIndex, openingIndex, reducedM
   useFrame((_, delta) => {
     if (!ring.current) return;
     const current = ring.current.rotation.y;
-    const receivingWheelInput = performance.now() < wheelMotionUntil.current;
-    if (!receivingWheelInput) motionTarget.current = alignedTarget.current;
     const nextTarget = motionTarget.current;
     if (reducedMotion) {
       ring.current.rotation.y = alignedTarget.current;
       return;
     }
-    ring.current.rotation.y = MathUtils.damp(current, nextTarget, receivingWheelInput ? 9 : 5.5, delta);
+    // Preserve the wheel position after input ends, matching the legacy carousel's
+    // free rotation instead of pulling the ring back to the nearest project slot.
+    ring.current.rotation.y = MathUtils.damp(current, nextTarget, WHEEL_FOLLOW_DAMPING, delta);
     if (Math.abs(ring.current.rotation.y - nextTarget) > 0.0005) invalidate();
 
   });
