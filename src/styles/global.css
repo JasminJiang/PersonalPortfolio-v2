@@ -1096,6 +1096,207 @@ html[data-carousel-state="ready"] .project-index {
   }
 }
 
+/* About mirrors the original full-height 5/12 portrait and 7/12 typographic grid. */
+.about-page {
+  background: #fff;
+  color: #000;
+  font-size: 11px;
+}
+
+.about-page .about-layout {
+  display: grid;
+  min-height: calc(100svh + 1px);
+  grid-template-columns: 41.6667% 58.3333%;
+}
+
+.about-page .about-layout__portrait {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  background: #eee;
+}
+
+.about-page .about-layout__content {
+  display: flex;
+  min-width: 0;
+  min-height: 100svh;
+  flex-direction: column;
+  padding: 2rem 0 1.5rem;
+}
+
+.about-layout__topbar {
+  flex: 0 0 auto;
+  padding-left: 2.75rem;
+}
+
+.about-layout__topbar a {
+  font-size: clamp(9px, 0.75vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: opacity 180ms ease;
+}
+
+.about-layout__topbar a:hover,
+.about-layout__topbar a:focus-visible {
+  opacity: 0.45;
+}
+
+.about-page .about-layout__main {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 7.25rem minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 1.75rem;
+  align-content: start;
+  padding: 5.5rem 3rem 0 1.25rem;
+}
+
+.about-page .section-label {
+  color: #707070;
+  font-family: var(--font-sans);
+  font-size: clamp(9px, 0.75vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.about-page .about-layout__copy {
+  display: grid;
+  max-width: none;
+  gap: 1.75rem;
+}
+
+.about-page .about-layout__copy p {
+  margin: 0;
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.about-page .about-contact {
+  display: contents;
+}
+
+.about-page .about-contact > .section-label {
+  grid-column: 1;
+  margin-top: 5rem;
+}
+
+.about-page .about-contact__links {
+  display: flex;
+  grid-column: 2;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 5rem;
+  font-size: clamp(9px, 0.75vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.about-page .about-contact__links span {
+  display: flex;
+  gap: 2rem;
+}
+
+.about-page .about-contact__links a {
+  transition: opacity 180ms ease;
+}
+
+.about-page .about-contact__links a:hover,
+.about-page .about-contact__links a:focus-visible {
+  opacity: 0.45;
+}
+
+.about-page .about-layout__signature {
+  grid-column: 1 / -1;
+  margin: 3.25rem 0 0;
+  font-size: clamp(3.25rem, 5.65vw, 5.75rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 56rem) {
+  .about-page .about-layout {
+    grid-template-columns: 41.6667% 58.3333%;
+  }
+
+  .about-page .about-layout__main {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    column-gap: 1rem;
+    padding-right: 1.5rem;
+    padding-left: 1rem;
+  }
+
+  .about-page .about-contact__links,
+  .about-page .about-contact__links span {
+    gap: 1rem;
+  }
+
+  .about-page .about-layout__signature {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+}
+
+@media (max-width: 42rem) {
+  .about-page .about-layout {
+    display: block;
+  }
+
+  .about-page .about-layout__portrait {
+    position: relative;
+    height: min(72svh, 36rem);
+  }
+
+  .about-page .about-layout__content {
+    min-height: 100svh;
+    padding: max(1.5rem, env(safe-area-inset-top)) 0 max(2rem, env(safe-area-inset-bottom));
+  }
+
+  .about-layout__topbar {
+    padding-left: 1rem;
+  }
+
+  .about-page .about-layout__main {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    padding: 4.5rem 1rem 0;
+  }
+
+  .about-page .about-layout__copy {
+    gap: 1.5rem;
+  }
+
+  .about-page .about-layout__copy p {
+    font-size: 11px;
+  }
+
+  .about-page .about-contact > .section-label,
+  .about-page .about-contact__links {
+    margin-top: 4rem;
+  }
+
+  .about-page .about-contact__links,
+  .about-page .about-contact__links span {
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+  }
+
+  .about-page .about-layout__signature {
+    margin-top: 3rem;
+    font-size: clamp(2.25rem, 10.5vw, 3.25rem);
+    white-space: normal;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
