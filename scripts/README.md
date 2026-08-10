@@ -9,7 +9,7 @@ npm run content:import -- --legacy-root ".."
 npm run content:validate -- --legacy-root ".." --deep
 ```
 
-The import reads the legacy TypeScript project array as syntax data without executing it. It writes 21 JSON content entries and a 197-item media manifest containing dimensions, byte counts, SHA-256 hashes, alt text, media order, and deterministic R2 keys.
+The import reads the legacy TypeScript project array as syntax data without executing it. It reconstructs the 21-project, 197-item legacy baseline; newer R2-native projects are maintained separately in the content collection and media manifest.
 
 `--deep` re-hashes every source file. Run it before and after the originals upload and compare the manifest with the R2 verification download.
 

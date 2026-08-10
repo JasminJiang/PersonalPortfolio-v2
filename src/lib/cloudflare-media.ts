@@ -21,6 +21,7 @@ export function cloudflareImageUrl(
     quality?: number;
     format?: "auto" | "avif" | "webp" | "json";
     fit?: "scale-down" | "contain" | "cover";
+    gravity?: string;
     height?: number;
   } = {},
 ) {
@@ -29,7 +30,9 @@ export function cloudflareImageUrl(
   const fit = options.fit ?? "scale-down";
   const dimensions = [`width=${Math.round(width)}`];
   if (options.height) dimensions.push(`height=${Math.round(options.height)}`);
-  const transformations = `${dimensions.join(",")},quality=${quality},format=${format},fit=${fit}`;
+  const parameters = [...dimensions, `quality=${quality}`, `format=${format}`, `fit=${fit}`];
+  if (options.gravity) parameters.push(`gravity=${options.gravity}`);
+  const transformations = parameters.join(",");
   return `${PUBLIC_ASSET_ORIGIN}/cdn-cgi/image/${transformations}/${encodeObjectKey(key)}`;
 }
 

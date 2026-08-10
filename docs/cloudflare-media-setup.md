@@ -25,7 +25,7 @@ Go to **Images → Transformations**, select the `jasminjiang.com` zone, and ena
 https://assets.jasminjiang.com/cdn-cgi/image/width=1280,quality=82,format=auto,fit=scale-down/projects/example/image.jpg
 ```
 
-The fixed responsive widths are `480`, `768`, `1280`, `1920`, `2560`, and `3840`. At 197 manifest entries, this stays comfortably within the normal transformation matrix while avoiding arbitrary one-off widths.
+The fixed responsive widths are `480`, `768`, `1280`, `1920`, `2560`, and `3840`. At 207 manifest entries, this stays comfortably within the normal transformation matrix while avoiding arbitrary one-off widths.
 
 ## 4. Prepare and upload
 
@@ -46,8 +46,8 @@ Run the generated ignored plans in `.media-work/upload-plan/`:
 
 The expected upload counts are:
 
-- Originals: `197` objects.
-- Public web media: `206` objects (`197` web objects plus `9` video posters).
+- Manifest originals: `207` objects.
+- Public web media: `216` objects (`207` web objects plus `9` video posters).
 
 Every public upload carries `Cache-Control: public, max-age=31536000, immutable`. Object keys include a source content hash, so changed files receive new URLs rather than overwriting cached content.
 
@@ -61,8 +61,8 @@ npm run media:verify-originals
 npm run media:verify-web-r2
 ```
 
-The public verifier checks all 206 public objects, immutable cache headers, CORS needed by WebGL textures, content types, and a representative set of Cloudflare image transformations. The originals verifier downloads every private object through your interactive Wrangler session, compares it with the manifest SHA-256, and preserves one restored sample. Reports and the restore sample stay under ignored `.media-work/` directories.
+The public verifier checks all manifest-derived public objects, immutable cache headers, CORS needed by WebGL textures, content types, and a representative set of Cloudflare image transformations. The originals verifier downloads every private object through your interactive Wrangler session, compares it with the manifest SHA-256, and preserves one restored sample. Reports and the restore sample stay under ignored `.media-work/` directories.
 
-The Web R2 verifier independently downloads all 206 prepared objects through the authenticated R2 API and compares each object byte-for-byte with the local prepared derivative. This proves upload integrity even before the public custom domain is active; the public verifier remains required for the CDN and transformation layer.
+The Web R2 verifier independently downloads every prepared object through the authenticated R2 API and compares each object byte-for-byte with the local prepared derivative. This proves upload integrity even before the public custom domain is active; the public verifier remains required for the CDN and transformation layer.
 
 Do not delete the legacy repository or local LFS checkout until the separate full originals SHA-256 verification and restore test have completed.

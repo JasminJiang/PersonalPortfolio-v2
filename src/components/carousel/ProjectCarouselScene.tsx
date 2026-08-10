@@ -8,6 +8,7 @@ import {
   nextWheelMotionTarget,
   subscribeCarouselWheelMotion,
 } from "./carouselMotion";
+import { coverTextureCrop } from "./carouselTexture";
 
 const FULL_TURN = Math.PI * 2;
 const CAROUSEL_RADIUS = 30;
@@ -16,6 +17,8 @@ const TEXTURE_WINDOW_RADIUS = 3;
 const ACTIVE_SETTLE_DELAY_MS = 180;
 const TEXTURE_SETTLE_DELAY_MS = 260;
 const TEXTURE_CACHE_SIZE = 10;
+const PANEL_WIDTH = 8;
+const PANEL_HEIGHT = 4.5;
 
 interface Props {
   projects: CarouselProject[];
@@ -45,6 +48,21 @@ interface CarouselTexturePool {
   trim: (protectedSources: Set<string>) => void;
   setTextureInitializer: (initializer?: (texture: Texture) => void) => void;
   dispose: () => void;
+}
+
+function applyCoverCrop(texture: Texture) {
+  const image = texture.image as {
+    height?: number;
+    naturalHeight?: number;
+    naturalWidth?: number;
+    width?: number;
+  } | undefined;
+  const imageWidth = image?.naturalWidth ?? image?.width ?? 0;
+  const imageHeight = image?.naturalHeight ?? image?.height ?? 0;
+  const crop = coverTextureCrop(imageWidth, imageHeight, PANEL_WIDTH, PANEL_HEIGHT);
+  texture.repeat.set(crop.repeatX, crop.repeatY);
+  texture.offset.set(crop.offsetX, crop.offsetY);
+  texture.updateMatrix();
 }
 
 function createCarouselTexturePool(maxEntries: number): CarouselTexturePool {
@@ -89,6 +107,7 @@ function createCarouselTexturePool(maxEntries: number): CarouselTexturePool {
         texture.colorSpace = SRGBColorSpace;
         texture.minFilter = LinearFilter;
         texture.generateMipmaps = false;
+        applyCoverCrop(texture);
         entry.texture = texture;
         entry.status = "ready";
         entry.lastUsed = performance.now();
@@ -312,7 +331,7 @@ const CarouselPanel = memo(function CarouselPanel({
           invalidate();
         }}
       >
-        <planeGeometry args={[8, 4.5, 24, 1]} />
+        <planeGeometry args={[PANEL_WIDTH, PANEL_HEIGHT, 24, 1]} />
         <meshBasicMaterial
           ref={surface}
           color="#ffffff"

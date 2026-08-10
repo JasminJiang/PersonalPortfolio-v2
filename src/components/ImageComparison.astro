@@ -1,0 +1,151 @@
+---
+import {
+  cloudflareImageSrcSet,
+  cloudflareImageUrl,
+  defaultResponsiveImageWidth,
+} from "../lib/cloudflare-media";
+import type { MediaManifestItem } from "../types/media";
+
+interface Props {
+  original: MediaManifestItem;
+  composite: MediaManifestItem;
+  sizes?: string;
+}
+
+const {
+  original,
+  composite,
+  sizes = "(max-width: 42rem) calc(100vw - 2rem), min(64rem, calc(100vw - 5rem))",
+} = Astro.props;
+
+if (original.kind !== "image" || composite.kind !== "image") {
+  throw new Error("ImageComparison accepts image media only");
+}
+
+const originalSrc = cloudflareImageUrl(original.webR2Key, defaultResponsiveImageWidth(original));
+const compositeSrc = cloudflareImageUrl(composite.webR2Key, defaultResponsiveImageWidth(composite));
+---
+
+<figure
+  class="image-comparison"
+  style={`--comparison-ratio: ${composite.width} / ${composite.height}; --comparison-position: 50%`}
+  data-image-comparison
+>
+  <div class="image-comparison__stage">
+    <img
+      class="image-comparison__image image-comparison__image--original"
+      src={originalSrc}
+      srcset={cloudflareImageSrcSet(original)}
+      sizes={sizes}
+      width={original.width}
+      height={original.height}
+      alt={original.alt}
+      loading="lazy"
+      decoding="async"
+      draggable="false"
+      data-comparison-image
+    />
+    <div class="image-comparison__composite" aria-hidden="true">
+      <img
+        class="image-comparison__image image-comparison__image--composite"
+        src={compositeSrc}
+        srcset={cloudflareImageSrcSet(composite)}
+        sizes={sizes}
+        width={composite.width}
+        height={composite.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable="false"
+        data-comparison-image
+      />
+    </div>
+
+    <span class="image-comparison__label image-comparison__label--original">Original</span>
+    <span class="image-comparison__label image-comparison__label--composite">AIGC composite</span>
+
+    <div class="image-comparison__divider" aria-hidden="true">
+      <span></span>
+    </div>
+    <input
+      class="image-comparison__range"
+      type="range"
+      min="0"
+      max="100"
+      value="50"
+      aria-label="Reveal original photograph"
+      aria-valuetext="50% original photograph revealed"
+    />
+
+    <div class="image-comparison__fallback" aria-hidden="true">
+      <span>Comparison unavailable</span>
+    </div>
+  </div>
+  <figcaption>Drag the divider to compare the original photograph with the AIGC composite.</figcaption>
+</figure>
+
+<script>
+  const initializeImageComparisons = () => {
+    document.querySelectorAll<HTMLElement>("[data-image-comparison]").forEach((comparison) => {
+      if (comparison.dataset.bound === "true") return;
+      comparison.dataset.bound = "true";
+
+      const range = comparison.querySelector<HTMLInputElement>(".image-comparison__range");
+      if (!range) return;
+
+      const update = () => {
+        const value = Number(range.value);
+        comparison.style.setProperty("--comparison-position", `${value}%`);
+        range.setAttribute("aria-valuetext", `${value}% original photograph revealed`);
+      };
+      const updateFromPointer = (clientX: number) => {
+        const bounds = range.getBoundingClientRect();
+        if (bounds.width === 0) return;
+        const value = Math.round(((clientX - bounds.left) / bounds.width) * 100);
+        range.value = String(Math.max(0, Math.min(100, value)));
+        update();
+      };
+      const markUnavailable = () => comparison.classList.add("image-comparison--error");
+      const images = Array.from(comparison.querySelectorAll<HTMLImageElement>("[data-comparison-image]"));
+      const reconcileAvailability = () => {
+        if (images.every((image) => image.complete && image.naturalWidth > 0)) {
+          comparison.classList.remove("image-comparison--error");
+        }
+      };
+
+      let activePointerId: number | null = null;
+      range.addEventListener("pointerdown", (event) => {
+        if (!event.isPrimary) return;
+        event.preventDefault();
+        activePointerId = event.pointerId;
+        range.setPointerCapture(event.pointerId);
+        range.focus({ preventScroll: true });
+        updateFromPointer(event.clientX);
+      });
+      range.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== activePointerId) return;
+        updateFromPointer(event.clientX);
+      });
+      const endPointerInteraction = (event: PointerEvent) => {
+        if (event.pointerId !== activePointerId) return;
+        updateFromPointer(event.clientX);
+        activePointerId = null;
+        if (range.hasPointerCapture(event.pointerId)) range.releasePointerCapture(event.pointerId);
+      };
+      range.addEventListener("pointerup", endPointerInteraction);
+      range.addEventListener("pointercancel", endPointerInteraction);
+
+      range.addEventListener("input", update);
+      images.forEach((image) => {
+        image.addEventListener("error", markUnavailable, { once: true });
+        image.addEventListener("load", reconcileAvailability);
+        if (image.complete && image.naturalWidth === 0) markUnavailable();
+      });
+      reconcileAvailability();
+      update();
+    });
+  };
+
+  document.addEventListener("astro:page-load", initializeImageComparisons);
+  initializeImageComparisons();
+</script>
