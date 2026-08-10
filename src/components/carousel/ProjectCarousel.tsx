@@ -28,6 +28,7 @@ export interface CarouselProject {
   title: string;
   category: "architecture" | "immersive-media" | "ui-ux" | "photography";
   categoryLabel: string;
+  photographyDiscipline?: PhotographyDiscipline;
   year: number;
   coverSrc: string;
   previewSrc: string;
@@ -44,14 +45,34 @@ const REDUCED_MOTION_WHEEL_INTERVAL_MS = 180;
 const SCENE_AFTER_INPUT_DELAY_MS = 220;
 const AUTOMATIC_SCENE_IDLE_TIMEOUT_MS = 2500;
 const LazyCarouselScene = lazy(() => import("./ProjectCarouselScene"));
-const FILTERS = [
+const PRIMARY_FILTERS = [
   { id: "all", label: "All projects" },
   { id: "architecture", label: "Architecture design" },
-  { id: "immersive-media", label: "MR" },
-  { id: "ui-ux", label: "UIUX" },
+  { id: "immersive-media", label: "XR" },
+  { id: "ui-ux", label: "UI/UX" },
   { id: "photography", label: "Photography" },
 ] as const;
-type ProjectFilter = (typeof FILTERS)[number]["id"];
+const PHOTOGRAPHY_FILTERS = [
+  { id: "humanist", label: "Humanist" },
+  { id: "wedding-bridal", label: "Wedding & Bridal" },
+  { id: "product-still-life", label: "Product & Still Life" },
+  { id: "commercial-portrait", label: "Commercial Portrait" },
+  { id: "runway-backstage", label: "Runway & Backstage" },
+  { id: "aigc-photography", label: "AIGC × Photography" },
+] as const;
+type PrimaryFilter = (typeof PRIMARY_FILTERS)[number]["id"];
+export type PhotographyDiscipline = (typeof PHOTOGRAPHY_FILTERS)[number]["id"];
+type ProjectFilter = PrimaryFilter | PhotographyDiscipline;
+
+function isPhotographyDiscipline(filter: ProjectFilter): filter is PhotographyDiscipline {
+  return PHOTOGRAPHY_FILTERS.some((item) => item.id === filter);
+}
+
+function matchesFilter(project: CarouselProject, filter: ProjectFilter) {
+  if (filter === "all") return true;
+  if (isPhotographyDiscipline(filter)) return project.photographyDiscipline === filter;
+  return project.category === filter;
+}
 
 class CarouselErrorBoundary extends Component<{
   children: ReactNode;
@@ -116,7 +137,7 @@ export default function ProjectCarousel({ projects }: Props) {
     moved: boolean;
   } | null>(null);
   const filteredProjects = useMemo(
-    () => filter === "all" ? projects : projects.filter((project) => project.category === filter),
+    () => projects.filter((project) => matchesFilter(project, filter)),
     [filter, projects],
   );
   const activeProject = filteredProjects[activeIndex] ?? filteredProjects[0] ?? projects[0];
@@ -260,9 +281,7 @@ export default function ProjectCarousel({ projects }: Props) {
 
   const changeFilter = useCallback((nextFilter: ProjectFilter) => {
     if (nextFilter === filter) return;
-    const nextProjects = nextFilter === "all"
-      ? projects
-      : projects.filter((project) => project.category === nextFilter);
+    const nextProjects = projects.filter((project) => matchesFilter(project, nextFilter));
     const firstProject = nextProjects[0];
     activeIndexRef.current = 0;
     setActiveIndex(0);
@@ -441,16 +460,19 @@ export default function ProjectCarousel({ projects }: Props) {
     >
       <header className="carousel-shell__header">
         <nav className="carousel-shell__filters" aria-label="Project categories">
-          {FILTERS.map((item) => {
+          {PRIMARY_FILTERS.map((item) => {
             const count = item.id === "all"
               ? projects.length
               : projects.filter((project) => project.category === item.id).length;
+            const photographyExpanded = item.id === "photography"
+              && (filter === "photography" || isPhotographyDiscipline(filter));
             return (
               <button
                 type="button"
                 key={item.id}
-                className={filter === item.id ? "is-active" : undefined}
+                className={filter === item.id || photographyExpanded ? "is-active" : undefined}
                 aria-pressed={filter === item.id}
+                aria-expanded={item.id === "photography" ? photographyExpanded : undefined}
                 onClick={() => changeFilter(item.id)}
               >
                 <span>{item.label}</span>
@@ -458,6 +480,25 @@ export default function ProjectCarousel({ projects }: Props) {
               </button>
             );
           })}
+          {(filter === "photography" || isPhotographyDiscipline(filter)) && (
+            <div className="carousel-shell__photography-filters" role="group" aria-label="Photography categories">
+              {PHOTOGRAPHY_FILTERS.map((item) => {
+                const count = projects.filter((project) => project.photographyDiscipline === item.id).length;
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={filter === item.id ? "is-active" : undefined}
+                    aria-pressed={filter === item.id}
+                    onClick={() => changeFilter(item.id)}
+                  >
+                    <span>{item.label}</span>
+                    <span aria-hidden="true">[{String(count).padStart(2, "0")}]</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </nav>
         <a className="carousel-shell__about" href="/about/">About</a>
       </header>

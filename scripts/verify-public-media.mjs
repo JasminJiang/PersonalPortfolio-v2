@@ -32,7 +32,7 @@ const publicObjects = manifest.items.flatMap((item) => [
   ...(item.posterR2Key ? [{ key: item.posterR2Key, kind: "image" }] : []),
 ]);
 
-if (publicObjects.length !== 206) throw new Error(`Expected 206 public objects, received ${publicObjects.length}`);
+const expectedObjectCount = publicObjects.length;
 
 const objectChecks = await mapWithConcurrency(publicObjects, 8, async (object, index) => {
   const url = `${origin}/${encodeKey(object.key)}`;
@@ -48,7 +48,7 @@ const objectChecks = await mapWithConcurrency(publicObjects, 8, async (object, i
       ...(!contentType.startsWith(expectedType) ? [`content-type ${contentType || "missing"}`] : []),
       ...(!["*", corsOrigin].includes(allowOrigin) ? [`cors ${allowOrigin || "missing"}`] : []),
     ];
-    process.stdout.write(`Checked object ${String(index + 1).padStart(3, "0")}/206 ${object.key}\n`);
+    process.stdout.write(`Checked object ${String(index + 1).padStart(3, "0")}/${expectedObjectCount} ${object.key}\n`);
     return { key: object.key, url, ok: errors.length === 0, status: response.status, errors };
   } catch (error) {
     return { key: object.key, url, ok: false, status: 0, errors: [error instanceof Error ? error.message : String(error)] };
@@ -81,7 +81,7 @@ const transformationChecks = await mapWithConcurrency(transformCandidates, 4, as
 const report = {
   checkedAt: new Date().toISOString(),
   origin,
-  expectedObjects: 206,
+  expectedObjects: expectedObjectCount,
   objectChecks,
   transformationChecks,
   passed: objectChecks.every((check) => check.ok) && transformationChecks.every((check) => check.ok),

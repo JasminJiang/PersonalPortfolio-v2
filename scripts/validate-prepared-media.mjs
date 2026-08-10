@@ -84,7 +84,8 @@ for (const item of manifest.items) {
   checkedFiles += 1;
 }
 
-if (checkedFiles !== 206) throw new Error(`Expected 206 prepared files, checked ${checkedFiles}`);
+const expectedFiles = manifest.items.reduce((count, item) => count + 1 + (item.posterR2Key ? 1 : 0), 0);
+if (checkedFiles !== expectedFiles) throw new Error(`Expected ${expectedFiles} prepared files, checked ${checkedFiles}`);
 if (failures.length) throw new Error(`Prepared media validation failed:\n${JSON.stringify(failures, null, 2)}`);
 
-process.stdout.write("Validated 206 prepared files: image dimensions/metadata, video H.264/yuv420p/faststart, and posters.\n");
+process.stdout.write(`Validated ${checkedFiles} prepared files: image dimensions/metadata, video H.264/yuv420p/faststart, and posters.\n`);

@@ -736,6 +736,160 @@ html[data-carousel-state="ready"] .project-index {
   color: rgb(255 255 255 / 76%);
 }
 
+.image-comparison {
+  width: 100%;
+  margin: 0;
+}
+
+.image-comparison__stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  aspect-ratio: var(--comparison-ratio);
+  background: var(--color-paper);
+  cursor: col-resize;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.image-comparison__image,
+.image-comparison__composite {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-comparison__image {
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.image-comparison__composite {
+  z-index: 1;
+  overflow: hidden;
+  clip-path: inset(0 0 0 var(--comparison-position));
+  will-change: clip-path;
+}
+
+.image-comparison__label {
+  position: absolute;
+  top: 0.75rem;
+  z-index: 3;
+  padding: 0.45rem 0.6rem;
+  background: rgb(16 16 15 / 72%);
+  color: rgb(255 255 255 / 88%);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.image-comparison__label--original {
+  left: 0.75rem;
+}
+
+.image-comparison__label--composite {
+  right: 0.75rem;
+}
+
+.image-comparison__divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--comparison-position);
+  z-index: 3;
+  width: 2px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 18%);
+  pointer-events: none;
+  transform: translateX(-1px);
+}
+
+.image-comparison__divider span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgb(16 16 15 / 72%);
+  box-shadow: 0 0.25rem 1.25rem rgb(0 0 0 / 24%);
+  transform: translate(-50%, -50%);
+}
+
+.image-comparison__divider span::before {
+  color: #fff;
+  content: "\2039  \203A";
+  font-size: 1.25rem;
+  letter-spacing: 0.2rem;
+  line-height: 1;
+  transform: translateX(0.1rem);
+}
+
+.image-comparison__range {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: col-resize;
+  opacity: 0;
+  touch-action: pan-y;
+}
+
+.image-comparison__range:focus-visible {
+  opacity: 1;
+  outline: 2px solid #000;
+  outline-offset: 4px;
+}
+
+.image-comparison__range:focus-visible::-webkit-slider-runnable-track,
+.image-comparison__range:focus-visible::-moz-range-track {
+  background: transparent;
+}
+
+.image-comparison__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  align-items: flex-end;
+  padding: 1rem;
+  background: var(--color-paper);
+  color: #65625d;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  pointer-events: none;
+}
+
+.image-comparison--error .image-comparison__fallback {
+  display: flex;
+}
+
+.image-comparison > figcaption {
+  padding-top: 0.75rem;
+  color: #707070;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-comparison__composite,
+  .image-comparison__divider {
+    will-change: auto;
+  }
+}
+
 .project-detail {
   min-height: 100svh;
   padding: 0 var(--page-gutter);
@@ -1673,12 +1827,22 @@ html[data-carousel-state] {
   transition: color 180ms ease;
 }
 
-.carousel-shell__filters button:first-child {
+.carousel-shell__filters > button:first-child {
   margin-bottom: 1.5rem;
 }
 
+.carousel-shell__filters > button:not(:first-child) {
+  height: 24px;
+  line-height: 24px;
+}
+
+.carousel-shell__filters > button[aria-expanded="true"] {
+  height: 22px;
+  line-height: 22px;
+}
+
 .carousel-shell__filters button span:last-child {
-  padding-top: 0.08rem;
+  transform: translateY(0.08rem);
   font-size: var(--home-interface-count-size);
 }
 
@@ -1686,6 +1850,21 @@ html[data-carousel-state] {
 .carousel-shell__filters button:focus-visible,
 .carousel-shell__filters button.is-active {
   color: #000;
+}
+
+.carousel-shell__photography-filters {
+  display: grid;
+  gap: 0;
+  margin: 0 0 0 0.35rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid rgb(16 16 15 / 16%);
+}
+
+.carousel-shell__photography-filters button {
+  height: 20px;
+  font-weight: 400;
+  letter-spacing: 0.065em;
+  line-height: 20px;
 }
 
 .carousel-shell__about {
@@ -1855,8 +2034,12 @@ html[data-carousel-state] {
     width: min(15rem, calc(100vw - 6rem));
   }
 
-  .carousel-shell__filters button:first-child {
+  .carousel-shell__filters > button:first-child {
     margin-bottom: 1rem;
+  }
+
+  .carousel-shell__photography-filters {
+    margin-top: 0;
   }
 
   .carousel-shell__about {

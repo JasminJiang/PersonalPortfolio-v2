@@ -1,0 +1,50 @@
+{
+  "slug": "aigc-photography-01",
+  "legacyId": "AIGC01",
+  "order": 22,
+  "title": "Gilded Reliquary",
+  "category": "photography",
+  "categoryLabel": "AIGC × Photography",
+  "photographyDiscipline": "aigc-photography",
+  "year": 2026,
+  "description": [
+    "Gilded Reliquary reimagines contemporary fashion portraiture through the atmosphere of a timeworn medieval painting. Muted olive grounds, devotional stillness, and symbolic gestures—an apple, a vessel, a stream of milk—move between the photographed body and an AIGC-constructed pictorial world. Drag each divider to reveal the original photograph beneath the final composite.",
+    "The garment was designed and handcrafted by Lara. Jasmin Xinjie Jiang conceived and led the shoot, shaping its visual language and overseeing the lighting, photography, post-production, and final synthesis of AIGC imagery with the original photographs."
+  ],
+  "coverMediaId": "aigc-photography-01--cover",
+  "coverGravity": "0.5x0.24",
+  "mediaIds": [
+    "aigc-photography-01--cover",
+    "aigc-photography-01--274-original",
+    "aigc-photography-01--274-composite",
+    "aigc-photography-01--357-original",
+    "aigc-photography-01--357-composite",
+    "aigc-photography-01--371-original",
+    "aigc-photography-01--394-original",
+    "aigc-photography-01--394-composite",
+    "aigc-photography-01--438-original",
+    "aigc-photography-01--438-composite"
+  ],
+  "comparisonPairs": [
+    {
+      "originalMediaId": "aigc-photography-01--274-original",
+      "compositeMediaId": "aigc-photography-01--274-composite"
+    },
+    {
+      "originalMediaId": "aigc-photography-01--357-original",
+      "compositeMediaId": "aigc-photography-01--357-composite"
+    },
+    {
+      "originalMediaId": "aigc-photography-01--371-original",
+      "compositeMediaId": "aigc-photography-01--cover"
+    },
+    {
+      "originalMediaId": "aigc-photography-01--394-original",
+      "compositeMediaId": "aigc-photography-01--394-composite"
+    },
+    {
+      "originalMediaId": "aigc-photography-01--438-original",
+      "compositeMediaId": "aigc-photography-01--438-composite"
+    }
+  ]
+}

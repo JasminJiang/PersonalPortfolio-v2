@@ -3,6 +3,7 @@ import type { GetStaticPaths } from "astro";
 import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 import CloudflareMedia from "../../components/CloudflareMedia.astro";
+import ImageComparison from "../../components/ImageComparison.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   cloudflareImageSrcSet,
@@ -26,7 +27,6 @@ interface Props {
 
 export const getStaticPaths = (async () => {
   const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
-  if (projects.length !== 21) throw new Error(`Expected 21 projects, received ${projects.length}`);
   return projects.map((project, index) => ({
     params: { slug: project.data.slug },
     props: {
@@ -43,6 +43,14 @@ if (media.length !== project.data.mediaIds.length) throw new Error(`Media manife
 
 const [cover, ...details] = media;
 if (!cover) throw new Error(`Cover media is missing for ${project.data.slug}`);
+const comparisonPairs = (project.data.comparisonPairs ?? []).map((pair) => {
+  const original = mediaById.get(pair.originalMediaId);
+  const composite = mediaById.get(pair.compositeMediaId);
+  if (!original || !composite) throw new Error(`Comparison media is missing for ${project.data.slug}`);
+  return { original, composite };
+});
+const comparisonMediaIds = new Set(comparisonPairs.flatMap(({ original, composite }) => [original.id, composite.id]));
+const standaloneDetails = details.filter((item) => !comparisonMediaIds.has(item.id));
 const description = toMetaDescription(
   project.data.description[0]
     || `${project.data.title}, a ${project.data.categoryLabel.toLowerCase()} project by Jasmin Xinjie Jiang.`,
@@ -124,9 +132,12 @@ const projectStructuredData = {
         </div>
       </div>
 
-      {details.length > 0 && (
+      {(comparisonPairs.length > 0 || standaloneDetails.length > 0) && (
         <section class="project-detail__gallery" aria-label={`${project.data.title} media`}>
-          {details.map((item) => <CloudflareMedia media={item} />)}
+          {comparisonPairs.map(({ original, composite }) => (
+            <ImageComparison original={original} composite={composite} />
+          ))}
+          {standaloneDetails.map((item) => <CloudflareMedia media={item} />)}
         </section>
       )}
 

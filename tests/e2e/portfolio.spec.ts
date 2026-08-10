@@ -46,6 +46,49 @@ test("carousel supports buttons, keyboard, wheel, and route restoration", async 
   await expect(heading).toHaveText("Aeolian Resonance");
 });
 
+test("photography expands into six editorial disciplines", async ({ page }) => {
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Interactive project carousel" });
+  const photography = carousel.getByRole("button", { name: "Photography", exact: true });
+
+  await expect(photography).toContainText("[12]");
+  await photography.click();
+  await expect(photography).toHaveAttribute("aria-expanded", "true");
+
+  const disciplines = carousel.getByRole("group", { name: "Photography categories" });
+  await expect(disciplines.getByRole("button")).toHaveCount(6);
+  const rhythm = await page.evaluate(() => {
+    const primary = [...document.querySelectorAll<HTMLElement>(".carousel-shell__filters > button:not(:first-child)")];
+    const secondary = [...document.querySelectorAll<HTMLElement>(".carousel-shell__photography-filters button")];
+    const top = (element: HTMLElement) => element.getBoundingClientRect().top;
+    return {
+      primary: top(primary[1]!) - top(primary[0]!),
+      transition: top(secondary[0]!) - top(primary.at(-1)!),
+      secondary: top(secondary[1]!) - top(secondary[0]!),
+    };
+  });
+  expect(rhythm.primary).toBeCloseTo(24, 1);
+  expect(rhythm.transition).toBeCloseTo(22, 1);
+  expect(rhythm.secondary).toBeCloseTo(20, 1);
+  const expectedDisciplines = [
+    ["Humanist", "[01]"],
+    ["Wedding & Bridal", "[03]"],
+    ["Product & Still Life", "[02]"],
+    ["Commercial Portrait", "[03]"],
+    ["Runway & Backstage", "[02]"],
+    ["AIGC × Photography", "[01]"],
+  ] as const;
+  for (const [name, count] of expectedDisciplines) {
+    const discipline = disciplines.getByRole("button", { name, exact: true });
+    await expect(discipline).toBeVisible();
+    await expect(discipline).toContainText(count);
+  }
+
+  await disciplines.getByRole("button", { name: /Commercial Portrait/ }).click();
+  await expect(carousel.getByRole("heading", { level: 1 })).toHaveText("Untitled Photo 7");
+  await expect(page).toHaveURL(/#photography-07$/);
+});
+
 test("high-frequency wheel bursts cannot queue more than one project of motion", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop wheel behavior is not used by the touch interface");
   await page.goto("/");
@@ -298,6 +341,37 @@ test("project detail typography remains readable from full to split-screen width
   }
 });
 
+test("AIGC photography comparisons support pointer dragging and keyboard control", async ({ page }) => {
+  await page.goto("/projects/aigc-photography-01/");
+
+  const comparisons = page.locator("[data-image-comparison]");
+  await expect(comparisons).toHaveCount(5);
+  await expect(page.locator(".project-detail__cover img")).toHaveAttribute(
+    "src",
+    /projects\/aigc-photography-01\/000-b083b3b8d7083d8f\.jpg/,
+  );
+
+  const firstComparison = comparisons.first();
+  const slider = firstComparison.getByRole("slider", { name: "Reveal original photograph" });
+  await expect(slider).toHaveValue("50");
+  await slider.scrollIntoViewIfNeeded();
+  const box = await slider.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+
+  await page.mouse.move(box.x + box.width * 0.25, box.y + box.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.5, { steps: 8 });
+  await page.mouse.up();
+  expect(Number(await slider.inputValue())).toBeGreaterThan(70);
+
+  await slider.press("Home");
+  await slider.press("ArrowRight");
+  await expect(slider).toHaveValue("1");
+  await expect(slider).toHaveAttribute("aria-valuetext", "1% original photograph revealed");
+  await expect(firstComparison).toHaveCSS("--comparison-position", "1%");
+});
+
 test("route transitions announce the project and unmount the WebGL canvas", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
@@ -356,7 +430,7 @@ test("About remains scrollable and its closing signature is reachable", async ({
   await expect(page.locator(".about-layout__signature")).toBeInViewport();
 });
 
-for (const route of ["/", "/about/", "/projects/aeolian-resonance/", "/missing-page/"]) {
+for (const route of ["/", "/about/", "/projects/aeolian-resonance/", "/projects/aigc-photography-01/", "/missing-page/"]) {
   test(`${route} has no serious accessibility issue or horizontal overflow`, async ({ page }) => {
     await page.goto(route);
     if (route === "/") {

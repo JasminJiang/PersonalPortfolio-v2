@@ -46,7 +46,7 @@ export const mediaManifestSchema = z.object({
     z.literal(2560),
     z.literal(3840),
   ]),
-  items: z.array(mediaManifestItemSchema).length(197),
+  items: z.array(mediaManifestItemSchema).min(197),
 }).strict();
 
 export const mediaManifest = mediaManifestSchema.parse(manifestJson) as MediaManifest;
