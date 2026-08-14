@@ -6,7 +6,7 @@ carousel.
 
 ## Architecture
 
-- Astro generates the home page, About page, 22 project routes, and the custom
+- Astro generates the home page, About page, 23 project routes, and the custom
   404 page as static HTML.
 - React and React Three Fiber run only on the interactive home carousel.
 - Cloudflare Pages serves the site; R2 and image transformations deliver the

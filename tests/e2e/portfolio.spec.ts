@@ -51,7 +51,7 @@ test("photography expands into six editorial disciplines", async ({ page }) => {
   const carousel = page.getByRole("region", { name: "Interactive project carousel" });
   const photography = carousel.getByRole("button", { name: "Photography", exact: true });
 
-  await expect(photography).toContainText("[12]");
+  await expect(photography).toContainText("[13]");
   await photography.click();
   await expect(photography).toHaveAttribute("aria-expanded", "true");
 
@@ -75,7 +75,7 @@ test("photography expands into six editorial disciplines", async ({ page }) => {
     ["Wedding & Bridal", "[03]"],
     ["Product & Still Life", "[02]"],
     ["Commercial Portrait", "[03]"],
-    ["Runway & Backstage", "[02]"],
+    ["Runway & Backstage", "[03]"],
     ["AIGC × Photography", "[01]"],
   ] as const;
   for (const [name, count] of expectedDisciplines) {

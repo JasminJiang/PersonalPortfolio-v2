@@ -25,7 +25,7 @@ Go to **Images → Transformations**, select the `jasminjiang.com` zone, and ena
 https://assets.jasminjiang.com/cdn-cgi/image/width=1280,quality=82,format=auto,fit=scale-down/projects/example/image.jpg
 ```
 
-The fixed responsive widths are `480`, `768`, `1280`, `1920`, `2560`, and `3840`. At 207 manifest entries, this stays comfortably within the normal transformation matrix while avoiding arbitrary one-off widths.
+The fixed responsive widths are `480`, `768`, `1280`, `1920`, `2560`, and `3840`. At 218 manifest entries, this stays comfortably within the normal transformation matrix while avoiding arbitrary one-off widths.
 
 ## 4. Prepare and upload
 
@@ -46,8 +46,8 @@ Run the generated ignored plans in `.media-work/upload-plan/`:
 
 The expected upload counts are:
 
-- Manifest originals: `207` objects.
-- Public web media: `216` objects (`207` web objects plus `9` video posters).
+- Manifest originals: `218` objects.
+- Public web media: `227` objects (`218` web objects plus `9` video posters).
 
 Every public upload carries `Cache-Control: public, max-age=31536000, immutable`. Object keys include a source content hash, so changed files receive new URLs rather than overwriting cached content.
 
